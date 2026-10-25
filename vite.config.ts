@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/Anmol-sindh/'
+    base: '/Anmol-sindh/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
