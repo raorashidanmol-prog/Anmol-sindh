@@ -1,0 +1,6 @@
+{
+  "name": "ANMOL SINDH | انمول سنڌ",
+  "description": "Educational platform for Pakistani primary school students (Classes 1–5), teachers, and parents with lessons, poems, stories, games, audio/video players, and secure owner admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
