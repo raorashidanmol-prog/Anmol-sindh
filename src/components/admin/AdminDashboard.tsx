@@ -103,18 +103,7 @@ useEffect(() => {
   setAuditLogs([] as any);
   setSettings({} as any);
 };
-    // Refresh content with admin filter
-    fetch('/api/content?admin=true')
-      .then((res) => res.json())
-      .then((data) => setResources(data.resources || []))
-      .catch(() => {});
-
-    // Refresh apps
-    fetch('/api/apps')
-      .then((res) => res.json())
-      .then((data) => setApps(data || []))
-      .catch(() => {});
-  };
+    
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
