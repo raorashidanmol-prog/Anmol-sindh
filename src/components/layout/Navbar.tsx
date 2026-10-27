@@ -18,6 +18,7 @@ interface NavbarProps {
   setActiveTab: (tab: string) => void;
   onOpenAdmin: () => void;
   isAdminLoggedIn: boolean;
+  logoUrl?: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -25,17 +26,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onOpenAdmin,
   isAdminLoggedIn,
+  logoUrl,
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
     { id: 'home', label: t('home'), icon: Sparkles },
-    { id: 'library', label: t('library'), icon: BookOpen },
-    { id: 'poems', label: t('poems'), icon: Music },
+    { id: 'videos', label: language === 'sd' ? 'وڊيو گيلري' : language === 'ur' ? 'ویڈیو گیلری' : 'Video Gallery', icon: Video },
     { id: 'stories', label: t('stories'), icon: Video },
-    { id: 'apps', label: t('gamesApps'), icon: Gamepad2 },
-    { id: 'downloads', label: t('downloads'), icon: Download },
+    { id: 'apps', label: language === 'sd' ? 'تعليمي رانديون' : language === 'ur' ? 'تعلیمی کھیل' : 'Educational Games', icon: Gamepad2 },
+    { id: 'downloads', label: language === 'sd' ? 'درسي ڪتاب ۽ ورڪ شيٽس' : language === 'ur' ? 'کتب و ورک شیٹس' : 'Books & Worksheets', icon: BookOpen },
+    { id: 'library', label: t('library'), icon: BookOpen },
   ];
 
   const handleNavClick = (id: string) => {
@@ -54,9 +56,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-3 text-left focus:outline-none group shrink-0"
           >
-            <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-tr from-[#00b875] via-[#00e599] to-[#4ffec0] flex items-center justify-center text-slate-950 font-black shadow-[0_0_20px_rgba(0,229,153,0.35)] group-hover:scale-105 group-hover:shadow-[0_0_26px_rgba(0,229,153,0.6)] transition-all">
-              <span className="font-sindhi text-xl font-bold">سنڌ</span>
-            </div>
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt="Website Logo" 
+                className="w-10 h-10 md:w-11 md:h-11 rounded-xl object-contain bg-slate-900 border border-[#00e599]/40 shadow-[0_0_20px_rgba(0,229,153,0.35)] p-0.5 group-hover:scale-105 group-hover:shadow-[0_0_26px_rgba(0,229,153,0.6)] transition-all"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-tr from-[#00b875] via-[#00e599] to-[#4ffec0] flex items-center justify-center text-slate-950 font-black shadow-[0_0_20px_rgba(0,229,153,0.35)] group-hover:scale-105 group-hover:shadow-[0_0_26px_rgba(0,229,153,0.6)] transition-all">
+                <span className="font-sindhi text-xl font-bold">سنڌ</span>
+              </div>
+            )}
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-sindhi text-lg md:text-xl font-bold text-white group-hover:text-[#00e599] transition-colors">

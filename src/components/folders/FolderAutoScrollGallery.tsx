@@ -18,7 +18,8 @@ interface FolderAutoScrollGalleryProps {
   resources: EducationalResource[];
   apps: AppLink[];
   onWatchVideo: (video: EducationalResource) => void;
-  onPlayAudio: (track: EducationalResource, playlist?: EducationalResource[]) => void;
+  onPlayAudio?: (track: EducationalResource, playlist?: EducationalResource[]) => void;
+  onOpenPdf?: (pdf: EducationalResource) => void;
   onOpenApp: (appId: string) => void;
   onDownload: (item: EducationalResource) => void;
 }
@@ -29,6 +30,7 @@ export const FolderAutoScrollGallery: React.FC<FolderAutoScrollGalleryProps> = (
   apps,
   onWatchVideo,
   onPlayAudio,
+  onOpenPdf,
   onOpenApp,
   onDownload,
 }) => {
@@ -101,8 +103,14 @@ export const FolderAutoScrollGallery: React.FC<FolderAutoScrollGalleryProps> = (
   const handleCardClick = (item: typeof allItems[0]) => {
     if (item.type === 'video' && item.rawResource) {
       onWatchVideo(item.rawResource);
+    } else if (item.type === 'pdf' && item.rawResource) {
+      if (onOpenPdf) {
+        onOpenPdf(item.rawResource);
+      } else {
+        onDownload(item.rawResource);
+      }
     } else if (item.type === 'audio' && item.rawResource) {
-      onPlayAudio(item.rawResource, resources.filter((r) => r.content_type === 'audio'));
+      if (onPlayAudio) onPlayAudio(item.rawResource, resources.filter((r) => r.content_type === 'audio'));
     } else if (item.type === 'app' && item.rawApp) {
       if (item.rawApp.url && (item.rawApp.url.startsWith('http://') || item.rawApp.url.startsWith('https://'))) {
         window.open(item.rawApp.url, '_blank');

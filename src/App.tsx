@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AudioPlayerProvider, useAudioPlayer } from './context/AudioPlayerContext';
-import { EducationalResource, AppLink } from './types';
+import { EducationalResource, AppLink, SiteSettings } from './types';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { HeroSection } from './components/home/HeroSection';
@@ -19,8 +19,9 @@ import { AppsSection } from './components/home/AppsSection';
 import { HomeMediaBoxes } from './components/home/HomeMediaBoxes';
 import { ContentLibrary } from './components/content/ContentLibrary';
 import { DownloadCenter } from './components/download/DownloadCenter';
-import { GlobalAudioPlayer } from './components/player/GlobalAudioPlayer';
 import { VideoPlayerModal } from './components/player/VideoPlayerModal';
+import { PdfReaderModal } from './components/pdf/PdfReaderModal';
+import { GamesSectionFrame } from './components/games/GamesSectionFrame';
 import { InteractiveGamesModal } from './components/games/InteractiveGamesModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 
@@ -32,16 +33,19 @@ function MainApp() {
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [resources, setResources] = useState<EducationalResource[]>([]);
   const [apps, setApps] = useState<AppLink[]>([]);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Modals
+  // Modals & Dedicated Viewers
   const [adminOpen, setAdminOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<EducationalResource | null>(null);
+  const [selectedPdf, setSelectedPdf] = useState<EducationalResource | null>(null);
   const [activeGameAppId, setActiveGameAppId] = useState<string | null>(null);
 
   // Saved scroll positions for seamless Back navigation
   const savedFolderScrollYRef = useRef<number>(0);
   const savedVideoScrollYRef = useRef<number>(0);
+  const savedPdfScrollYRef = useRef<number>(0);
 
   // Navigation Filters passed to library
   const [libraryCategoryFilter, setLibraryCategoryFilter] = useState('all');
@@ -58,6 +62,12 @@ function MainApp() {
     } else {
       setIsAdminLoggedIn(false);
     }
+
+    // Load site settings (branding, logo, text)
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => setSiteSettings(data))
+      .catch((err) => console.error('Failed to load settings:', err));
 
     // Load content
     fetch('/api/content')
@@ -118,6 +128,19 @@ function MainApp() {
     }, 10);
   };
 
+  const handleOpenPdf = (pdf: EducationalResource) => {
+    savedPdfScrollYRef.current = window.scrollY;
+    setSelectedPdf(pdf);
+  };
+
+  const handleClosePdf = () => {
+    setSelectedPdf(null);
+    // Restore previous scroll position instantly
+    setTimeout(() => {
+      window.scrollTo({ top: savedPdfScrollYRef.current, behavior: 'instant' });
+    }, 10);
+  };
+
   const handleOpenApp = (appId: string) => {
     setActiveGameAppId(appId);
   };
@@ -137,7 +160,7 @@ function MainApp() {
     }, 50);
   };
 
-  // Determine context title for the video player back button
+  // Determine context title for player & viewer back button
   const currentFolderConfig = activeFolderId ? FOLDERS_CONFIG.find((f) => f.id === activeFolderId) : null;
   const videoContextTitle = currentFolderConfig
     ? language === 'sd'
@@ -161,6 +184,7 @@ function MainApp() {
         }}
         onOpenAdmin={() => setAdminOpen(true)}
         isAdminLoggedIn={isAdminLoggedIn}
+        logoUrl={siteSettings?.logo_url}
       />
 
       {/* Main Content Area */}
@@ -175,7 +199,7 @@ function MainApp() {
         ) : (
           <>
             {/* ============================================================ */}
-            {/* HOME VIEW: HERO + AUTO-SCROLL CAROUSEL + FOLDERS + APPS + BOXES */}
+            {/* HOME VIEW: HERO + AUTO-SCROLL CAROUSEL + FOLDERS + GAMES + BOXES */}
             {/* ============================================================ */}
             {activeTab === 'home' && (
               <>
@@ -188,6 +212,7 @@ function MainApp() {
                     onBack={handleBackFromFolder}
                     onWatchVideo={handleWatchVideo}
                     onPlayAudio={handlePlayAudio}
+                    onOpenPdf={handleOpenPdf}
                     onOpenApp={handleOpenApp}
                   />
                 ) : (
@@ -209,6 +234,7 @@ function MainApp() {
                       apps={apps}
                       onPlayAudio={handlePlayAudio}
                       onWatchVideo={handleWatchVideo}
+                      onOpenPdf={handleOpenPdf}
                       onOpenApp={handleOpenApp}
                     />
 
@@ -219,24 +245,30 @@ function MainApp() {
                       isPlayerOpen={selectedVideo !== null}
                     />
 
-                    {/* 2. PROFESSIONAL FOLDER AND CATEGORY SYSTEM (Visual 3D Glass Folders) */}
+                    {/* 2. DEDICATED INTERACTIVE GAMES FRAME (Playable directly on the page!) */}
+                    <GamesSectionFrame
+                      initialGameId="math"
+                      onOpenExternalModal={handleOpenApp}
+                    />
+
+                    {/* 3. PROFESSIONAL FOLDER AND CATEGORY SYSTEM (Visual 3D Glass Folders) */}
                     <FolderGrid
                       resources={resources}
                       apps={apps}
                       onOpenFolder={handleOpenFolder}
                     />
 
-                    {/* 3. APPS & GAMES SECTION (Separate Box with First Screen Image - Press to Open Link Direct) */}
+                    {/* 4. APPS & GAMES APPS SECTION */}
                     <AppsSection
                       apps={apps}
                       onOpenApp={handleOpenApp}
                     />
 
-                    {/* 4. CORE MEDIA BOXES (Audio Box, Video Box, Animated Stories Box) */}
+                    {/* 5. CORE MEDIA BOXES (Video Poems, Animated Stories, Read-Only PDF Books) */}
                     <HomeMediaBoxes
                       resources={resources}
-                      onPlayAudio={handlePlayAudio}
                       onWatchVideo={handleWatchVideo}
+                      onOpenPdf={handleOpenPdf}
                       onNavigateTab={(tab) => {
                         setActiveTab(tab);
                         setActiveFolderId(null);
@@ -247,25 +279,34 @@ function MainApp() {
               </>
             )}
 
+            {/* VIDEO GALLERY VIEW */}
+            {activeTab === 'videos' && (
+              <div className="space-y-8 py-6">
+                <AutoVideoCarousel
+                  videos={resources}
+                  onWatchVideo={handleWatchVideo}
+                  isPlayerOpen={selectedVideo !== null}
+                />
+                <ContentLibrary
+                  resources={resources.filter((r) => r.content_type === 'video')}
+                  onPlayAudio={handlePlayAudio}
+                  onWatchVideo={handleWatchVideo}
+                  onOpenPdf={handleOpenPdf}
+                  onOpenGame={handleOpenApp}
+                  initialCategory="all"
+                />
+              </div>
+            )}
+
             {/* FULL LIBRARY VIEW */}
             {activeTab === 'library' && (
               <ContentLibrary
                 resources={resources}
                 onPlayAudio={handlePlayAudio}
                 onWatchVideo={handleWatchVideo}
+                onOpenPdf={handleOpenPdf}
                 onOpenGame={handleOpenApp}
                 initialCategory={libraryCategoryFilter}
-              />
-            )}
-
-            {/* AUDIO POEMS TAB */}
-            {activeTab === 'poems' && (
-              <ContentLibrary
-                resources={resources}
-                onPlayAudio={handlePlayAudio}
-                onWatchVideo={handleWatchVideo}
-                onOpenGame={handleOpenApp}
-                initialCategory="audio_poems"
               />
             )}
 
@@ -275,14 +316,19 @@ function MainApp() {
                 resources={resources}
                 onPlayAudio={handlePlayAudio}
                 onWatchVideo={handleWatchVideo}
+                onOpenPdf={handleOpenPdf}
                 onOpenGame={handleOpenApp}
                 initialCategory="animated_stories"
               />
             )}
 
-            {/* GAMES & APPS VIEW */}
+            {/* GAMES & APPS VIEW WITH PLAYABLE FRAME */}
             {activeTab === 'apps' && (
-              <div className="py-6">
+              <div className="py-6 space-y-8">
+                <GamesSectionFrame
+                  initialGameId="math"
+                  onOpenExternalModal={handleOpenApp}
+                />
                 <AppsSection
                   apps={apps}
                   onOpenApp={handleOpenApp}
@@ -290,22 +336,20 @@ function MainApp() {
               </div>
             )}
 
-            {/* DOWNLOAD CENTER */}
+            {/* DOWNLOAD CENTER & READ-ONLY BOOKS VIEW */}
             {activeTab === 'downloads' && (
               <DownloadCenter
                 resources={resources}
                 onPlayAudio={handlePlayAudio}
                 onWatchVideo={handleWatchVideo}
+                onOpenPdf={handleOpenPdf}
               />
             )}
           </>
         )}
       </main>
 
-      {/* Persistent Global Audio Player */}
-      <GlobalAudioPlayer />
-
-      {/* DEDICATED FULL-SCREEN VIDEO PLAYER MODAL */}
+      {/* DEDICATED FULL-SCREEN VIDEO PLAYER MODAL (Strict isolation: only plays target video, zero external suggestions) */}
       {selectedVideo && (
         <VideoPlayerModal
           video={selectedVideo}
@@ -314,6 +358,15 @@ function MainApp() {
             (r) => r.content_type === 'video' && r.id !== selectedVideo.id
           )}
           onSelectVideo={(v) => setSelectedVideo(v)}
+          contextTitle={videoContextTitle}
+        />
+      )}
+
+      {/* DEDICATED READ-ONLY IN-APP PDF VIEWER MODAL */}
+      {selectedPdf && (
+        <PdfReaderModal
+          resource={selectedPdf}
+          onClose={handleClosePdf}
           contextTitle={videoContextTitle}
         />
       )}
@@ -343,6 +396,7 @@ function MainApp() {
       {/* Footer */}
       <Footer
         onOpenAdmin={() => setAdminOpen(true)}
+        logoUrl={siteSettings?.logo_url}
         onNavigateTab={(tab) => {
           setActiveTab(tab);
           setActiveFolderId(null);

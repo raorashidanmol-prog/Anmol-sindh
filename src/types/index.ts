@@ -13,6 +13,7 @@ export type SubjectType =
   | 'General Knowledge';
 
 export type ContentCategory =
+  | 'video_poems'
   | 'audio_poems'
   | 'animated_stories'
   | 'educational_videos'
@@ -98,6 +99,7 @@ export interface HeroBanner {
 }
 
 export interface SiteSettings {
+  logo_url?: string;
   site_name_sd: string;
   site_name_ur: string;
   site_name_en: string;

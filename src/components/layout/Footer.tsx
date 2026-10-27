@@ -5,9 +5,10 @@ import { Mail, MapPin, Shield, GraduationCap } from 'lucide-react';
 interface FooterProps {
   onOpenAdmin: () => void;
   onNavigateTab: (tab: string) => void;
+  logoUrl?: string;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenAdmin, onNavigateTab }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenAdmin, onNavigateTab, logoUrl }) => {
   const { t, language } = useLanguage();
 
   return (
@@ -21,9 +22,20 @@ export const Footer: React.FC<FooterProps> = ({ onOpenAdmin, onNavigateTab }) =>
           {/* Column 1: Brand & Identity */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00b875] to-[#00e599] flex items-center justify-center text-slate-950 font-black font-sindhi text-lg shadow-[0_0_18px_rgba(0,229,153,0.35)]">
-                سنڌ
-              </div>
+              {logoUrl ? (
+                <img 
+                  src={logoUrl} 
+                  alt="Website Logo" 
+                  className="w-10 h-10 rounded-xl object-contain bg-slate-900 border border-[#00e599]/40 shadow-[0_0_18px_rgba(0,229,153,0.35)] p-0.5"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00b875] to-[#00e599] flex items-center justify-center text-slate-950 font-black font-sindhi text-lg shadow-[0_0_18px_rgba(0,229,153,0.35)]">
+                  سنڌ
+                </div>
+              )}
               <div>
                 <h3 className="font-sindhi text-xl font-bold text-white">انمول سنڌ</h3>
                 <p className="text-xs text-[#00e599] font-bold tracking-wider">ANMOL SINDH PORTAL</p>

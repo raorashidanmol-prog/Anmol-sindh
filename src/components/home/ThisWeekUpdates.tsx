@@ -19,8 +19,9 @@ import {
 interface ThisWeekUpdatesProps {
   resources: EducationalResource[];
   apps: AppLink[];
-  onPlayAudio: (track: EducationalResource, playlist?: EducationalResource[]) => void;
+  onPlayAudio?: (track: EducationalResource, playlist?: EducationalResource[]) => void;
   onWatchVideo: (video: EducationalResource) => void;
+  onOpenPdf?: (pdf: EducationalResource) => void;
   onOpenApp: (appId: string) => void;
 }
 
@@ -29,6 +30,7 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
   apps,
   onPlayAudio,
   onWatchVideo,
+  onOpenPdf,
   onOpenApp,
 }) => {
   const { getText, language } = useLanguage();
@@ -85,16 +87,19 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
   const handleItemClick = (item: EducationalResource) => {
     if (item.content_type === 'video') {
       onWatchVideo(item);
-    } else if (item.content_type === 'audio') {
-      onPlayAudio(item, updatesList.filter((r) => r.content_type === 'audio'));
     } else if (item.content_type === 'pdf') {
-      // Trigger download
-      const a = document.createElement('a');
-      a.href = item.download_url || item.media_url || '#';
-      a.download = `${item.title_en || 'worksheet'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      if (onOpenPdf) {
+        onOpenPdf(item);
+      } else {
+        const a = document.createElement('a');
+        a.href = item.download_url || item.media_url || '#';
+        a.download = `${item.title_en || 'worksheet'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } else if (item.content_type === 'audio' && onPlayAudio) {
+      onPlayAudio(item, updatesList.filter((r) => r.content_type === 'audio'));
     }
   };
 

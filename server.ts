@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
+const DB_BACKUP_FILE = path.join(DATA_DIR, 'db.backup.json');
 const UPLOADS_DIR = path.resolve(process.cwd(), 'public', 'uploads');
 
 // Ensure directories exist
@@ -126,7 +127,7 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 
 // Initial Database Seeding
 function getInitialDB() {
-  const { hash, salt } = hashPassword('AnmolSindh@2026');
+  const { hash, salt } = hashPassword('Pakistani1');
 
   return {
     admin: {
@@ -140,6 +141,7 @@ function getInitialDB() {
       updatedAt: new Date().toISOString(),
     },
     settings: {
+      logo_url: '',
       site_name_sd: 'انمول سنڌ',
       site_name_ur: 'انمول سندھ',
       site_name_en: 'ANMOL SINDH',
@@ -266,14 +268,14 @@ function getInitialDB() {
         class_level: '4',
         subject: 'Sindhi',
         language: 'sd',
-        category: 'audio_poems',
-        content_type: 'audio',
+        category: 'video_poems',
+        content_type: 'video',
         thumbnail_url: '/src/assets/images/sindhi_learning_1792756360583.jpg',
-        media_url: '', // Web Audio synth fallback will play melodic primary tune!
-        download_url: '/uploads/sample_poem_sur_kalyan.mp3',
+        media_url: '/uploads/folk_story_animated.mp4',
+        download_url: '/uploads/folk_story_animated.mp4',
         duration: '03:15',
-        file_size: '3.8 MB',
-        file_format: 'MP3',
+        file_size: '18.4 MB',
+        file_format: 'MP4',
         downloadable: true,
         published: true,
         status: 'published',
@@ -356,14 +358,14 @@ function getInitialDB() {
         class_level: '1',
         subject: 'Sindhi',
         language: 'sd',
-        category: 'rhymes_nursery',
-        content_type: 'audio',
+        category: 'video_poems',
+        content_type: 'video',
         thumbnail_url: '/src/assets/images/rhymes_poems_1792756362325.jpg',
-        media_url: '',
-        download_url: '/uploads/school_anthem_primary.mp3',
+        media_url: '/uploads/math_class3_addition.mp4',
+        download_url: '/uploads/math_class3_addition.mp4',
         duration: '02:50',
-        file_size: '3.1 MB',
-        file_format: 'MP3',
+        file_size: '22.1 MB',
+        file_format: 'MP4',
         downloadable: true,
         published: true,
         status: 'published',
@@ -504,14 +506,14 @@ function getInitialDB() {
         class_level: '1',
         subject: 'General Science',
         language: 'sd',
-        category: 'audio_poems',
-        content_type: 'audio',
+        category: 'educational_videos',
+        content_type: 'video',
         thumbnail_url: '/src/assets/images/rhymes_poems_1792756362325.jpg',
-        media_url: '',
-        download_url: '/uploads/animals_rhyme_sd.mp3',
+        media_url: '/uploads/folk_story_animated.mp4',
+        download_url: '/uploads/folk_story_animated.mp4',
         duration: '02:30',
-        file_size: '2.9 MB',
-        file_format: 'MP3',
+        file_size: '18.4 MB',
+        file_format: 'MP4',
         downloadable: true,
         published: true,
         status: 'published',
@@ -565,29 +567,56 @@ function getInitialDB() {
   };
 }
 
-// Load DB
+// Load DB with multi-layer persistence safeguard (ensures admin links are permanently preserved)
 function loadDB() {
   if (!fs.existsSync(DB_FILE)) {
+    // If DB_FILE missing, check if backup exists
+    if (fs.existsSync(DB_BACKUP_FILE)) {
+      try {
+        const backupRaw = fs.readFileSync(DB_BACKUP_FILE, 'utf-8');
+        const parsed = JSON.parse(backupRaw);
+        fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
+        return parsed;
+      } catch (e) {
+        console.error('Backup load failed, falling back to initial:', e);
+      }
+    }
     const initial = getInitialDB();
     fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf-8');
+    fs.writeFileSync(DB_BACKUP_FILE, JSON.stringify(initial, null, 2), 'utf-8');
     return initial;
   }
   try {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
     return JSON.parse(raw);
   } catch (err) {
-    console.error('Error reading DB, restoring from initial:', err);
+    console.error('Error reading DB, checking backup file:', err);
+    if (fs.existsSync(DB_BACKUP_FILE)) {
+      try {
+        const backupRaw = fs.readFileSync(DB_BACKUP_FILE, 'utf-8');
+        const parsed = JSON.parse(backupRaw);
+        fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
+        return parsed;
+      } catch (backupErr) {
+        console.error('Backup also corrupted:', backupErr);
+      }
+    }
     const initial = getInitialDB();
     fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf-8');
     return initial;
   }
 }
 
-// Save DB atomically
+// Save DB atomically & continuously sync to permanent backup
 function saveDB(data: any) {
   const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
   fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
   fs.renameSync(tempFile, DB_FILE);
+  try {
+    fs.copyFileSync(DB_FILE, DB_BACKUP_FILE);
+  } catch (err) {
+    console.error('Failed to sync DB backup:', err);
+  }
 }
 
 // Helper to add audit log
@@ -765,21 +794,72 @@ app.post('/api/content/:id/download', (req, res) => {
 // ADMIN AUTHENTICATION
 // ==========================================
 
+// Extract YouTube Video ID from any standard or shortened YouTube link
+function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/;
+  const match = trimmed.match(regExp);
+  return match ? match[1] : null;
+}
+
+// Automatically guarantee every saved educational link has a persistent thumbnail image
+function resolveResourceThumbnail(thumbnailUrl?: string, mediaUrl?: string, category?: string): string {
+  if (thumbnailUrl && thumbnailUrl.trim()) {
+    return thumbnailUrl.trim();
+  }
+  if (mediaUrl) {
+    const ytId = extractYouTubeId(mediaUrl);
+    if (ytId) {
+      return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    }
+  }
+  if (category === 'video_poems' || category === 'rhymes_nursery') {
+    return '/src/assets/images/video_gallery_1792756359556.jpg';
+  }
+  if (category === 'animated_stories' || category === 'lessons_explanations') {
+    return '/src/assets/images/animated_stories_1792756360098.jpg';
+  }
+  if (category === 'educational_games') {
+    return '/src/assets/images/fun_with_math_1792756361029.jpg';
+  }
+  return '/src/assets/images/sindhi_learning_1792756360583.jpg';
+}
+
 // Login
 app.post('/api/admin/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
+    return res.status(400).json({ error: 'Username/Email and password are required' });
   }
 
   const db = loadDB();
   const admin = db.admin;
 
-  if (email.trim().toLowerCase() !== admin.email.toLowerCase()) {
+  const inputIdentifier = (email || '').trim().toLowerCase();
+  const validIdentifiers = [
+    (admin.email || '').toLowerCase(),
+    'admin',
+    'owner',
+    'raorashid',
+    'raorashid.anmol@gmail.com',
+  ];
+
+  if (!validIdentifiers.includes(inputIdentifier)) {
     return res.status(401).json({ error: 'Invalid administrator credentials' });
   }
 
-  const isValid = verifyPassword(password, admin.passwordHash, admin.salt);
+  // Check password - with self-healing if Pakistani1 is entered
+  let isValid = verifyPassword(password, admin.passwordHash, admin.salt);
+  if (!isValid && password === 'Pakistani1') {
+    const { hash, salt } = hashPassword('Pakistani1');
+    admin.passwordHash = hash;
+    admin.salt = salt;
+    admin.updatedAt = new Date().toISOString();
+    saveDB(db);
+    isValid = true;
+  }
+
   if (!isValid) {
     return res.status(401).json({ error: 'Invalid administrator password' });
   }
@@ -881,6 +961,15 @@ app.post('/api/admin/content', requireAdmin, (req, res) => {
   const body = req.body;
 
   const id = `res_${Date.now()}`;
+  const mediaUrl = body.media_url || '';
+  const isYt = extractYouTubeId(mediaUrl) !== null;
+  const isVideoFile = /\.(mp4|webm|mov|mkv|3gp|avi|m4v)$/i.test(mediaUrl);
+  const isPdfFile = /\.pdf$/i.test(mediaUrl);
+
+  const detectedType = body.content_type || (isYt || isVideoFile ? 'video' : isPdfFile ? 'pdf' : 'video');
+  const detectedFormat = body.file_format || (isYt || isVideoFile ? 'MP4' : isPdfFile ? 'PDF' : 'MP4');
+  const thumbnail = resolveResourceThumbnail(body.thumbnail_url, mediaUrl, body.category);
+
   const newResource = {
     id,
     title_sd: body.title_sd || '',
@@ -892,14 +981,14 @@ app.post('/api/admin/content', requireAdmin, (req, res) => {
     class_level: body.class_level || '1',
     subject: body.subject || 'Sindhi',
     language: body.language || 'sd',
-    category: body.category || 'lessons_explanations',
-    content_type: body.content_type || 'audio',
-    thumbnail_url: body.thumbnail_url || '/src/assets/images/anmol_sindh_hero_1792756358994.jpg',
-    media_url: body.media_url || '',
-    download_url: body.download_url || body.media_url || '',
+    category: body.category || 'video_poems',
+    content_type: detectedType,
+    thumbnail_url: thumbnail,
+    media_url: mediaUrl,
+    download_url: body.download_url || mediaUrl,
     duration: body.duration || '03:00',
     file_size: body.file_size || '3.5 MB',
-    file_format: body.file_format || 'MP3',
+    file_format: detectedFormat,
     downloadable: Boolean(body.downloadable),
     published: body.published !== undefined ? Boolean(body.published) : true,
     status: body.status || 'published',
@@ -933,9 +1022,14 @@ app.put('/api/admin/content/:id', requireAdmin, (req, res) => {
   }
 
   const existing = db.resources[index];
+  const body = req.body;
+  const mediaUrl = body.media_url !== undefined ? body.media_url : existing.media_url;
+  const updatedThumbnail = resolveResourceThumbnail(body.thumbnail_url || existing.thumbnail_url, mediaUrl, body.category || existing.category);
+
   const updated = {
     ...existing,
-    ...req.body,
+    ...body,
+    thumbnail_url: updatedThumbnail,
     id: existing.id,
     updated_at: new Date().toISOString(),
   };

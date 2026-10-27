@@ -14,14 +14,16 @@ import {
 
 interface DownloadCenterProps {
   resources: EducationalResource[];
-  onPlayAudio: (res: EducationalResource) => void;
+  onPlayAudio?: (res: EducationalResource) => void;
   onWatchVideo: (res: EducationalResource) => void;
+  onOpenPdf?: (res: EducationalResource) => void;
 }
 
 export const DownloadCenter: React.FC<DownloadCenterProps> = ({
   resources,
   onPlayAudio,
   onWatchVideo,
+  onOpenPdf,
 }) => {
   const { getText, language, t } = useLanguage();
   const [selectedClass, setSelectedClass] = useState<string>('all');
@@ -233,7 +235,7 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
                   <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
                     {item.content_type === 'audio' && (
                       <button
-                        onClick={() => onPlayAudio(item)}
+                        onClick={() => onPlayAudio?.(item)}
                         className="text-xs font-bold text-[#00e599] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Music className="w-3.5 h-3.5" />
@@ -250,10 +252,13 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
                       </button>
                     )}
                     {item.content_type === 'pdf' && (
-                      <div className="text-xs text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[#00e599]" />
-                        <span>{item.duration || 'Printable Document'}</span>
-                      </div>
+                      <button
+                        onClick={() => onOpenPdf && onOpenPdf(item)}
+                        className="text-xs font-bold text-[#00e599] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>{language === 'sd' ? 'پڙهو (Read PDF)' : 'پڑھیں (Read)'}</span>
+                      </button>
                     )}
 
                     <button

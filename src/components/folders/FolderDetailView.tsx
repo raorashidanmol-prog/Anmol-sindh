@@ -3,11 +3,11 @@ import { EducationalResource, AppLink, ClassLevel } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { FOLDERS_CONFIG, getItemsForFolder } from './folderData';
 import { FolderAutoScrollGallery } from './FolderAutoScrollGallery';
+import { GamesSectionFrame } from '../games/GamesSectionFrame';
 import { 
   ArrowLeft, 
   Search, 
   Play, 
-  Music, 
   Video, 
   FileText, 
   Download, 
@@ -28,7 +28,8 @@ interface FolderDetailViewProps {
   allApps: AppLink[];
   onBack: () => void;
   onWatchVideo: (video: EducationalResource) => void;
-  onPlayAudio: (track: EducationalResource, playlist?: EducationalResource[]) => void;
+  onPlayAudio?: (track: EducationalResource, playlist?: EducationalResource[]) => void;
+  onOpenPdf?: (pdf: EducationalResource) => void;
   onOpenApp: (appId: string) => void;
 }
 
@@ -39,6 +40,7 @@ export const FolderDetailView: React.FC<FolderDetailViewProps> = ({
   onBack,
   onWatchVideo,
   onPlayAudio,
+  onOpenPdf,
   onOpenApp,
 }) => {
   const { language, getText, t } = useLanguage();
@@ -218,6 +220,11 @@ export const FolderDetailView: React.FC<FolderDetailViewProps> = ({
         </div>
       </div>
 
+      {/* If this is the Educational Games folder, render the interactive playable Games Frame directly! */}
+      {(folderId === 'games_frame' || items.isGamesHub) && (
+        <GamesSectionFrame initialGameId="math" onOpenExternalModal={onOpenApp} />
+      )}
+
       {/* Auto-scrolling image gallery for this folder's items */}
       <FolderAutoScrollGallery
         folderTitle={folderTitle}
@@ -225,6 +232,7 @@ export const FolderDetailView: React.FC<FolderDetailViewProps> = ({
         apps={filteredApps}
         onWatchVideo={onWatchVideo}
         onPlayAudio={onPlayAudio}
+        onOpenPdf={onOpenPdf}
         onOpenApp={onOpenApp}
         onDownload={handleDownload}
       />
@@ -269,8 +277,10 @@ export const FolderDetailView: React.FC<FolderDetailViewProps> = ({
                 <div 
                   onClick={() => {
                     if (isVideo) onWatchVideo(item);
-                    else if (isAudio) onPlayAudio(item, filteredResources.filter((r) => r.content_type === 'audio'));
-                    else if (isPdf) handleDownload(item);
+                    else if (isPdf) {
+                      if (onOpenPdf) onOpenPdf(item);
+                      else handleDownload(item);
+                    }
                   }}
                   className="relative aspect-[16/10] w-full bg-slate-950 overflow-hidden cursor-pointer"
                 >
@@ -298,11 +308,6 @@ export const FolderDetailView: React.FC<FolderDetailViewProps> = ({
                         <Play className="w-6 h-6 fill-current translate-x-0.5" />
                       </div>
                     )}
-                    {isAudio && (
-                      <div className="w-11 h-11 rounded-full bg-[#00e599] text-slate-950 flex items-center justify-center shadow-[0_0_15px_rgba(0,229,153,0.5)] group-hover:scale-110 transition-transform">
-                        <Music className="w-5 h-5" />
-                      </div>
-                    )}
                     {isPdf && (
                       <div className="w-11 h-11 rounded-full bg-[#00e599] text-slate-950 flex items-center justify-center shadow-[0_0_15px_rgba(0,229,153,0.5)] group-hover:scale-110 transition-transform">
                         <FileText className="w-5 h-5" />
@@ -328,8 +333,10 @@ export const FolderDetailView: React.FC<FolderDetailViewProps> = ({
                     <h3 
                       onClick={() => {
                         if (isVideo) onWatchVideo(item);
-                        else if (isAudio) onPlayAudio(item, filteredResources.filter((r) => r.content_type === 'audio'));
-                        else if (isPdf) handleDownload(item);
+                        else if (isPdf) {
+                          if (onOpenPdf) onOpenPdf(item);
+                          else handleDownload(item);
+                        }
                       }}
                       className="font-sindhi text-base font-bold text-white group-hover:text-[#00e599] transition-colors line-clamp-2 cursor-pointer"
                     >
@@ -358,23 +365,13 @@ export const FolderDetailView: React.FC<FolderDetailViewProps> = ({
                       </button>
                     )}
 
-                    {isAudio && (
-                      <button
-                        onClick={() => onPlayAudio(item, filteredResources.filter((r) => r.content_type === 'audio'))}
-                        className="px-3 py-1.5 bg-[#00e599] hover:bg-[#4ffec0] text-slate-950 font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-sm"
-                      >
-                        <Play className="w-3.5 h-3.5 fill-current" />
-                        <span>{t('playNow')}</span>
-                      </button>
-                    )}
-
                     {isPdf && (
                       <button
-                        onClick={() => handleDownload(item)}
+                        onClick={() => (onOpenPdf ? onOpenPdf(item) : handleDownload(item))}
                         className="px-3 py-1.5 bg-[#00e599] hover:bg-[#4ffec0] text-slate-950 font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-sm"
                       >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>{t('download')}</span>
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>{language === 'sd' ? 'پڙهو (Read PDF)' : language === 'ur' ? 'پڑھیں (Read)' : 'Read PDF'}</span>
                       </button>
                     )}
                   </div>

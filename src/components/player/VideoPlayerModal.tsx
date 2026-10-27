@@ -282,9 +282,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black border border-[#00e599]/30 shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_35px_rgba(0,229,153,0.18)] flex items-center justify-center group"
         >
           {youtubeId ? (
-            /* YouTube Authorized Embed */
+            /* YouTube Authorized Strict Embed (rel=0 & modestbranding prevent external recommendations) */
             <iframe
-              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=0&rel=0&modestbranding=1`}
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=0&rel=0&modestbranding=1&controls=1&iv_load_policy=3&playsinline=1&showinfo=0&disablekb=0`}
               title={video.title_en}
               className="w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

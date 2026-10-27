@@ -15,8 +15,9 @@ import {
 
 interface ContentLibraryProps {
   resources: EducationalResource[];
-  onPlayAudio: (track: EducationalResource, playlist?: EducationalResource[]) => void;
+  onPlayAudio?: (track: EducationalResource, playlist?: EducationalResource[]) => void;
   onWatchVideo: (video: EducationalResource) => void;
+  onOpenPdf?: (pdf: EducationalResource) => void;
   onOpenGame: (appId: string) => void;
   initialCategory?: string;
 }
@@ -25,6 +26,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
   resources,
   onPlayAudio,
   onWatchVideo,
+  onOpenPdf,
   onOpenGame,
   initialCategory = 'all',
 }) => {
@@ -330,7 +332,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
                   <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 flex items-center justify-center transition-colors">
                     {isAudio && (
                       <button
-                        onClick={() => onPlayAudio(item, filtered.filter((r) => r.content_type === 'audio'))}
+                        onClick={() => onPlayAudio?.(item, filtered.filter((r) => r.content_type === 'audio'))}
                         className="w-11 h-11 rounded-full bg-[#00e599] hover:bg-[#4ffec0] text-slate-950 flex items-center justify-center shadow-[0_0_15px_rgba(0,229,153,0.5)] transition-transform active:scale-95 cursor-pointer"
                         title="Listen Audio"
                       >
@@ -386,7 +388,7 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
                     <div className="flex items-center gap-2">
                       {isAudio && (
                         <button
-                          onClick={() => onPlayAudio(item, filtered.filter((r) => r.content_type === 'audio'))}
+                          onClick={() => onPlayAudio?.(item, filtered.filter((r) => r.content_type === 'audio'))}
                           className="px-2.5 py-1 bg-[#00e599]/20 hover:bg-[#00e599] text-[#00e599] hover:text-slate-950 font-bold rounded-lg transition-all cursor-pointer"
                         >
                           {t('playNow')}
@@ -398,6 +400,15 @@ export const ContentLibrary: React.FC<ContentLibraryProps> = ({
                           className="px-2.5 py-1 bg-[#00e599]/20 hover:bg-[#00e599] text-[#00e599] hover:text-slate-950 font-bold rounded-lg transition-all cursor-pointer"
                         >
                           {t('watchNow')}
+                        </button>
+                      )}
+                      {isPdf && (
+                        <button
+                          onClick={() => (onOpenPdf ? onOpenPdf(item) : handleDownload(item))}
+                          className="px-2.5 py-1 bg-[#00e599]/20 hover:bg-[#00e599] text-[#00e599] hover:text-slate-950 font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>{language === 'sd' ? 'پڙهو (Read PDF)' : 'پڑھیں (Read)'}</span>
                         </button>
                       )}
                       {item.downloadable && (

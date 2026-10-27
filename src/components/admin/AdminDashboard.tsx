@@ -9,6 +9,8 @@ import {
   Edit3, 
   Trash2, 
   Eye, 
+  EyeOff,
+  Camera,
   Download, 
   RefreshCw, 
   BarChart3, 
@@ -46,15 +48,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Authentication State
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('anmol_admin_token'));
   const [adminUser, setAdminUser] = useState<any | null>(null);
-  const [loginEmail, setLoginEmail] = useState('raorashid.anmol@gmail.com');
+  const [loginEmail, setLoginEmail] = useState('admin');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Password Recovery state
   const [showRecovery, setShowRecovery] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
   const [newRecoveredPassword, setNewRecoveredPassword] = useState('');
+  const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
 
   // Active Admin Tab
   const [adminTab, setAdminTab] = useState<'overview' | 'content' | 'apps' | 'settings' | 'logs' | 'backup'>('overview');
@@ -81,7 +85,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Password Change State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [pwChangeStatus, setPwChangeStatus] = useState<string | null>(null);
+
+  // Logo upload state
+  const [logoUploadProgress, setLogoUploadProgress] = useState<string | null>(null);
 
   // File Upload State
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -166,6 +177,18 @@ useEffect(() => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authToken) return;
+    setPwChangeStatus(null);
+
+    if (newPassword.length < 6) {
+      setPwChangeStatus('Error: نئون پاسورڊ گهٽ ۾ گهٽ 6 اکر هجڻ گهرجي (New password must be at least 6 characters).');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPwChangeStatus('Error: نئون پاسورڊ ۽ تصديقي پاسورڊ هڪجهڙا ناهن (New password and confirm password do not match).');
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/change-password', {
         method: 'POST',
@@ -177,11 +200,58 @@ useEffect(() => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setPwChangeStatus('Password successfully updated!');
+      setPwChangeStatus('✓ پاسورڊ ڪاميابيءَ سان تبديل ٿي ويو! (Password successfully updated!)');
       setCurrentPassword('');
       setNewPassword('');
+      setConfirmPassword('');
     } catch (err: any) {
       setPwChangeStatus(`Error: ${err.message}`);
+    }
+  };
+
+  // Dedicated Website Logo Upload Handler
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !authToken) return;
+
+    setLogoUploadProgress(`Uploading logo (${(file.size / 1024).toFixed(1)} KB)...`);
+    try {
+      const res = await fetch(`/api/upload-binary?fileName=${encodeURIComponent(file.name)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type || 'image/png',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: file,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to upload logo');
+
+      const updatedSettings = {
+        ...(settings || {}),
+        logo_url: data.url,
+      };
+
+      setSettings(updatedSettings as SiteSettings);
+
+      // Save directly to server
+      await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(updatedSettings),
+      });
+
+      setLogoUploadProgress('✓ ويب سائيٽ جو نئون لوگو محفوظ ٿي ويو! (New Logo saved across website!)');
+      setTimeout(() => setLogoUploadProgress(null), 4000);
+      onDataChanged();
+    } catch (err: any) {
+      console.error('Logo upload error:', err);
+      setLogoUploadProgress(`Upload failed: ${err.message}`);
+      setTimeout(() => setLogoUploadProgress(null), 5000);
     }
   };
 
@@ -242,7 +312,7 @@ useEffect(() => {
     }
   };
 
-  // Save Content Resource
+  // Save Content Resource with automatic thumbnail preservation
   const handleSaveResource = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!authToken || !currentEditResource) return;
@@ -252,17 +322,36 @@ useEffect(() => {
       const url = isNew ? '/api/admin/content' : `/api/admin/content/${currentEditResource.id}`;
       const method = isNew ? 'POST' : 'PUT';
 
+      // Ensure every link always has a high-quality thumbnail
+      const mediaUrl = (currentEditResource.media_url || '').trim();
+      let resolvedThumb = (currentEditResource.thumbnail_url || '').trim();
+
+      if (!resolvedThumb) {
+        const ytMatch = mediaUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        if (ytMatch && ytMatch[1]) {
+          resolvedThumb = `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+        } else {
+          resolvedThumb = '/src/assets/images/video_gallery_1792756359556.jpg';
+        }
+      }
+
+      const payload = {
+        ...currentEditResource,
+        thumbnail_url: resolvedThumb,
+      };
+
       const res = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(currentEditResource),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error('Failed to save resource');
 
+      setIsEditingResource(false);
       setIsEditingResource(false);
       setCurrentEditResource(null);
       loadAdminData(authToken);
@@ -464,34 +553,48 @@ useEffect(() => {
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Owner Email</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    ايڊمن يوزرنيم يا ايميل (Admin Username or Email)
+                  </label>
                   <input
-                    type="email"
+                    type="text"
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="admin or raorashid.anmol@gmail.com"
                     className="w-full text-sm px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="Enter owner password"
-                    className="w-full text-sm px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <div className="mt-1 flex justify-between items-center text-[11px] text-slate-400">
-                    <span>Default initial password: <strong className="text-amber-400 font-mono">AnmolSindh@2026</strong></span>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    پاسورڊ (Password)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showLoginPassword ? 'text' : 'password'}
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full text-sm px-3.5 py-2.5 pr-11 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-400 p-1 cursor-pointer transition-colors"
+                      title={showLoginPassword ? "Hide password" : "Show password"}
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="mt-1 flex justify-end items-center text-[11px] text-slate-400">
                     <button
                       type="button"
                       onClick={() => setShowRecovery(true)}
-                      className="text-emerald-400 hover:underline"
+                      className="text-emerald-400 hover:underline cursor-pointer"
                     >
-                      Forgot?
+                      پاسورڊ بحال ڪريو (Recover Password)
                     </button>
                   </div>
                 </div>
@@ -524,26 +627,35 @@ useEffect(() => {
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Master Recovery Code</label>
                   <input
-                    type="text"
+                    type="password"
                     required
                     value={recoveryCode}
                     onChange={(e) => setRecoveryCode(e.target.value)}
-                    placeholder="ANMOL-9988-SECURE"
+                    placeholder="Enter confidential recovery code"
                     className="w-full text-sm px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono"
                   />
-                  <span className="text-[10px] text-slate-400">System Code: <strong className="font-mono text-emerald-400">ANMOL-9988-SECURE</strong></span>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">New Master Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={newRecoveredPassword}
-                    onChange={(e) => setNewRecoveredPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    className="w-full text-sm px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showRecoveryPassword ? 'text' : 'password'}
+                      required
+                      value={newRecoveredPassword}
+                      onChange={(e) => setNewRecoveredPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      className="w-full text-sm px-3.5 py-2.5 pr-11 bg-slate-800 border border-slate-700 rounded-xl text-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRecoveryPassword(!showRecoveryPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-400 p-1 cursor-pointer transition-colors"
+                      title={showRecoveryPassword ? "Hide password" : "Show password"}
+                    >
+                      {showRecoveryPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
@@ -961,35 +1073,33 @@ useEffect(() => {
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">Category</label>
                           <select
-                            value={currentEditResource?.category || 'lessons_explanations'}
+                            value={currentEditResource?.category || 'educational_videos'}
                             onChange={(e) => setCurrentEditResource({ ...currentEditResource, category: e.target.value as any })}
                             className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                           >
-                            <option value="audio_poems">Audio Poems</option>
-                            <option value="animated_stories">Animated Stories</option>
-                            <option value="educational_videos">Educational Videos</option>
-                            <option value="lessons_explanations">Lessons & Explanations</option>
-                            <option value="rhymes_nursery">Rhymes & Nursery</option>
-                            <option value="english_vocabulary">English Vocabulary</option>
-                            <option value="sindhi_learning">Sindhi Learning</option>
-                            <option value="urdu_learning">Urdu Learning</option>
-                            <option value="worksheets_pdf">Worksheets & PDF</option>
-                            <option value="educational_games">Educational Games</option>
-                            <option value="tests_quizzes">Tests & Quizzes</option>
+                            <option value="animated_stories">Animated Stories & Folk Tales</option>
+                            <option value="video_poems">Video Poems & Rhymes</option>
+                            <option value="educational_videos">Educational Videos & Lessons</option>
+                            <option value="lessons_explanations">Lessons & History Explanations</option>
+                            <option value="worksheets_pdf">Worksheets & Curriculum Books (PDF)</option>
+                            <option value="educational_games">Educational Games & Quizzes</option>
+                            <option value="tests_quizzes">RA Tests & Assessment Papers</option>
+                            <option value="sindhi_learning">Sindhi Learning & Language</option>
+                            <option value="urdu_learning">Urdu Learning & Grammar</option>
+                            <option value="english_vocabulary">English Vocabulary & Phonics</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">Content Type</label>
+                          <label className="block text-xs font-semibold text-[#00e599] mb-1">Content Format</label>
                           <select
-                            value={currentEditResource?.content_type || 'audio'}
+                            value={currentEditResource?.content_type || 'video'}
                             onChange={(e) => setCurrentEditResource({ ...currentEditResource, content_type: e.target.value as any })}
-                            className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                            className="w-full text-xs px-3 py-2 bg-slate-800 border border-[#00e599]/40 rounded-lg text-white font-semibold"
                           >
-                            <option value="audio">Audio (MP3)</option>
-                            <option value="video">Video (MP4/WebM)</option>
-                            <option value="pdf">Worksheet / PDF</option>
-                            <option value="interactive">Interactive</option>
+                            <option value="video">Video (MP4 / WebM / YouTube URL)</option>
+                            <option value="pdf">Worksheet / Curriculum Book (Read-Only PDF)</option>
+                            <option value="interactive">Interactive Game</option>
                           </select>
                         </div>
                       </div>
@@ -997,17 +1107,55 @@ useEffect(() => {
                       {/* File Uploads & URLs with Gallery & File Manager buttons */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
                         <div className="space-y-2">
-                          <label className="block text-xs font-semibold text-slate-300">
-                            Media File (Audio MP3 / Video MP4 / PDF Worksheet)
-                          </label>
-                          <input
-                            type="text"
-                            value={currentEditResource?.media_url || ''}
-                            onChange={(e) => setCurrentEditResource({ ...currentEditResource, media_url: e.target.value })}
-                            placeholder="/uploads/... or https://..."
-                            className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
-                          />
-                          <div className="flex flex-wrap gap-2 pt-1">
+                          <div className="flex items-center justify-between">
+                            <label className="block text-xs font-semibold text-slate-300">
+                              Permanent Video Link or Media File (YouTube URL / Direct MP4 / PDF)
+                            </label>
+                            <span className="text-[10px] text-emerald-400 font-mono">Link & Thumbnail Saved Permanently</span>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={currentEditResource?.media_url || ''}
+                              onChange={(e) => {
+                                const newUrl = e.target.value;
+                                const ytMatch = newUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                                const autoThumb = ytMatch ? `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg` : currentEditResource?.thumbnail_url;
+                                setCurrentEditResource({ 
+                                  ...currentEditResource, 
+                                  media_url: newUrl,
+                                  thumbnail_url: (!currentEditResource?.thumbnail_url || currentEditResource.thumbnail_url.includes('youtube.com')) && autoThumb ? autoThumb : currentEditResource?.thumbnail_url,
+                                  content_type: ytMatch ? 'video' : currentEditResource?.content_type || 'video',
+                                });
+                              }}
+                              placeholder="/uploads/... or https://www.youtube.com/watch?v=... or direct MP4 link"
+                              className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-mono focus:border-[#00e599] focus:outline-none"
+                            />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            {/* Auto extract thumbnail from YouTube link */}
+                            {currentEditResource?.media_url && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const ytMatch = (currentEditResource.media_url || '').match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                                  if (ytMatch && ytMatch[1]) {
+                                    setCurrentEditResource({
+                                      ...currentEditResource,
+                                      thumbnail_url: `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`,
+                                      content_type: 'video',
+                                    });
+                                  } else {
+                                    alert('لنڪ مان ٿمب نيل نه ملي سگهيو. توهان هيٺ ڏنل بٽڻ سان تصوير چونڊي سگهو ٿا.');
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 bg-[#00e599]/20 hover:bg-[#00e599]/30 text-[#00e599] border border-[#00e599]/40 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>Fetch Video Thumbnail</span>
+                              </button>
+                            )}
+
                             {/* Upload from File Manager */}
                             <label className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg cursor-pointer text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition-colors">
                               <Folder className="w-3.5 h-3.5 text-amber-400" />
@@ -1512,10 +1660,106 @@ useEffect(() => {
               {/* TAB 4: SITE & BRANDING */}
               {/* ============================================================ */}
               {adminTab === 'settings' && settings && (
-                <form onSubmit={handleSaveSettings} className="space-y-5">
+                <form onSubmit={handleSaveSettings} className="space-y-6">
                   <div>
                     <h3 className="text-lg font-bold text-white">Website Branding & Contact Details</h3>
-                    <p className="text-xs text-slate-400">Owner-only branding and footer configurations</p>
+                    <p className="text-xs text-slate-400">Owner-only branding, logo and footer configurations</p>
+                  </div>
+
+                  {/* Dedicated 3D Glassy Website Logo & Branding Control */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-[#00e599]/30 shadow-[0_4px_25px_rgba(0,0,0,0.6)] space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <ImageIcon className="w-5 h-5 text-[#00e599]" />
+                          <h4 className="text-base font-bold text-white font-sindhi">
+                            ويب سائيٽ جو لوگو ۽ برانڊنگ (Website Logo & Branding)
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          جڏهن توهان وٽ نئون لوگو هجي، هتي تصوير چونڊيو. اهو پاڻمرادو محفوظ ٿي سڄي سائيٽ تي نظر ايندو.
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-[#00e599]/10 text-[#00e599] border border-[#00e599]/30 self-start sm:self-auto">
+                        Navbar & Footer Logo
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                      {/* Logo Live Preview Frame */}
+                      <div className="md:col-span-4 flex flex-col items-center justify-center p-4 rounded-xl bg-slate-950/80 border border-[#00e599]/30 shadow-inner text-center">
+                        <span className="text-[11px] text-slate-400 font-medium mb-2">
+                          موجوده لوگو (Current Live Logo)
+                        </span>
+                        <div className="w-20 h-20 rounded-2xl bg-slate-900 border-2 border-[#00e599] shadow-[0_0_20px_rgba(0,229,153,0.35)] flex items-center justify-center overflow-hidden p-1.5 transition-transform hover:scale-105">
+                          {settings.logo_url ? (
+                            <img
+                              src={settings.logo_url}
+                              alt="Website Logo"
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-xl bg-gradient-to-tr from-[#00b875] via-[#00e599] to-[#4ffec0] flex items-center justify-center text-slate-950 font-bold font-sindhi text-2xl shadow-inner">
+                              سنڌ
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-emerald-400 font-mono mt-2">
+                          {settings.logo_url ? 'Custom Brand Logo Active' : 'Default Sindh Emblem Active'}
+                        </span>
+                      </div>
+
+                      {/* Uploader & Input Options */}
+                      <div className="md:col-span-8 space-y-3">
+                        <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-2">
+                          <label className="block text-xs font-semibold text-slate-200">
+                            1. نئون لوگو اپلوڊ ڪريو (Upload Logo from Device / Gallery):
+                          </label>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="px-4 py-2 bg-[#00e599] hover:bg-[#00c985] text-slate-950 rounded-xl cursor-pointer text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(0,229,153,0.35)] transition-all cursor-pointer">
+                              <Camera className="w-4 h-4 text-slate-950" />
+                              <span>🖼️ Choose Logo Image</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleLogoUpload}
+                              />
+                            </label>
+                            {settings.logo_url && (
+                              <button
+                                type="button"
+                                onClick={() => setSettings({ ...settings, logo_url: '' })}
+                                className="px-3 py-2 bg-slate-800 hover:bg-rose-950 text-rose-300 hover:text-rose-200 rounded-xl text-xs font-medium border border-slate-700 transition-colors cursor-pointer"
+                              >
+                                Revert to Default Emblem
+                              </button>
+                            )}
+                          </div>
+                          {logoUploadProgress && (
+                            <div className="text-xs font-medium text-[#00e599] bg-[#00e599]/10 border border-[#00e599]/30 p-2 rounded-lg">
+                              {logoUploadProgress}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block text-xs font-semibold text-slate-300">
+                            2. يا لوگو جي لنڪ داخل ڪريو (Or Paste Image URL):
+                          </label>
+                          <input
+                            type="text"
+                            value={settings.logo_url || ''}
+                            onChange={(e) => setSettings({ ...settings, logo_url: e.target.value })}
+                            placeholder="https://.../logo.png or /uploads/..."
+                            className="w-full text-xs px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white font-mono focus:border-[#00e599] focus:outline-none"
+                          />
+                          <p className="text-[11px] text-slate-400">
+                            (توهان جڏهن به لوگو جي تصوير ڏيو، هتي اپلوڊ ڪري سگهو ٿا يا لنڪ رکي محفوظ ڪري سگهو ٿا)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1598,45 +1842,95 @@ useEffect(() => {
               {adminTab === 'logs' && (
                 <div className="space-y-6">
                   {/* Change Password Panel */}
-                  <form onSubmit={handleChangePassword} className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 space-y-3 max-w-md">
-                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                      <Key className="w-4 h-4 text-emerald-400" />
-                      <span>Change Master Administrator Password</span>
-                    </h4>
+                  <form onSubmit={handleChangePassword} className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-[#00e599]/30 space-y-4 max-w-lg shadow-xl">
+                    <div className="border-b border-slate-800 pb-2">
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        <Key className="w-4 h-4 text-[#00e599]" />
+                        <span>پاسورڊ سيڪيورٽي ۽ تبديلي (Change Master Password)</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        پاسورڊ مڪمل طور تي محفوظ آهي ۽ اسڪرين تي ڪنهن کي به ظاهر نه ٿيندو.
+                      </p>
+                    </div>
 
                     {pwChangeStatus && (
-                      <div className="p-2 bg-slate-900 border border-slate-700 text-xs rounded text-emerald-300">
+                      <div className={`p-2.5 rounded-xl text-xs font-medium border ${
+                        pwChangeStatus.startsWith('✓') 
+                          ? 'bg-emerald-950/80 border-emerald-700 text-emerald-300' 
+                          : 'bg-rose-950/80 border-rose-800 text-rose-200'
+                      }`}>
                         {pwChangeStatus}
                       </div>
                     )}
 
                     <div>
-                      <label className="block text-xs text-slate-300 mb-1">Current Password</label>
-                      <input
-                        type="password"
-                        required
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full text-xs px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
-                      />
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">موجوده پاسورڊ (Current Password)</label>
+                      <div className="relative">
+                        <input
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          required
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Enter current password"
+                          className="w-full text-xs px-3.5 py-2.5 pr-10 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-[#00e599] focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-400 p-1 cursor-pointer"
+                        >
+                          {showCurrentPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs text-slate-300 mb-1">New Password (Min 6 chars)</label>
-                      <input
-                        type="password"
-                        required
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full text-xs px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
-                      />
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">نئون پاسورڊ (New Password - Min 6 chars)</label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? 'text' : 'password'}
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new strong password"
+                          className="w-full text-xs px-3.5 py-2.5 pr-10 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-[#00e599] focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-400 p-1 cursor-pointer"
+                        >
+                          {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">نئين پاسورڊ جي تصديق (Confirm New Password)</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          required
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Re-enter new password"
+                          className="w-full text-xs px-3.5 py-2.5 pr-10 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-[#00e599] focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-400 p-1 cursor-pointer"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </div>
 
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer transition-colors"
                     >
-                      Update Password
+                      پاسورڊ تبديل ۽ محفوظ ڪريو (Update & Save Password)
                     </button>
                   </form>
 
