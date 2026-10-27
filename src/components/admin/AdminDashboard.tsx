@@ -98,24 +98,11 @@ useEffect(() => {
         
 
   const loadAdminData = (token: string) => {
-    // Load stats
-    fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => res.json())
-      .then(setStats)
-      .catch(() => {});
-
-    // Load audit logs
-    fetch('/api/admin/audit-logs', { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => res.json())
-      .then(setAuditLogs)
-      .catch(() => {});
-
-    // Load settings
-    fetch('/api/settings')
-      .then((res) => res.json())
-      .then(setSettings)
-      .catch(() => {});
-
+  // FIXED: No API on GitHub Pages
+  setStats({ totalOrders: 0, revenue: 0 } as any);
+  setAuditLogs([] as any);
+  setSettings({} as any);
+};
     // Refresh content with admin filter
     fetch('/api/content?admin=true')
       .then((res) => res.json())
