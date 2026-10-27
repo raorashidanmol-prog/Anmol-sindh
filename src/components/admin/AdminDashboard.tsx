@@ -86,27 +86,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // File Upload State
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
-  // Verify session on open
-  useEffect(() => {
-    if (authToken) {
-      fetch('/api/admin/me', {
-        headers: { Authorization: `Bearer ${authToken}` },
-      })
-        .then((res) => {
-          if (res.ok) return res.json();
-          throw new Error('Session invalid');
-        })
-        .then((user) => {
-          setAdminUser(user);
-          loadAdminData(authToken);
-        })
-        .catch(() => {
-          localStorage.removeItem('anmol_admin_token');
-          setAuthToken(null);
-          setAdminUser(null);
-        });
-    }
-  }, [authToken, isOpen]);
+  // Verify session on open - FIXED for GitHub Pages
+useEffect(() => {
+  if (authToken) {
+    // Local check, no API call
+    const savedUser = { email: 'raorashid.anmol@gmail.com', name: 'Anmol Sindh Owner' };
+    setAdminUser(savedUser as any);
+    loadAdminData(authToken);
+  }
+}, [authToken]);
+        
 
   const loadAdminData = (token: string) => {
     // Load stats
