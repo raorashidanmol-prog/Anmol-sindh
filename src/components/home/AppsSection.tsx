@@ -36,32 +36,8 @@ export const AppsSection: React.FC<AppsSectionProps> = ({ apps, onOpenApp }) => 
   };
 
   const handleDirectOpen = (app: AppLink) => {
-    // If URL is an active external http/https link, open directly
-    if (app.url && (app.url.startsWith('http://') || app.url.startsWith('https://'))) {
-      window.open(app.url, '_blank');
-      return;
-    }
-
-    // If it's the configured Fun with Math placeholder, launch interactive or alert
-    if (app.url === 'FUN_WITH_MATH_URL' || app.id === 'app_fun_with_math') {
-      onOpenApp('app_fun_with_math');
-      return;
-    }
-
-    // If it's the configured RA Test Maker placeholder, launch interactive or alert
-    if (app.url === 'Anmol Ak _TEST_MAKER_URL' || app.id === 'app_ra_test_maker') {
-      onOpenApp('app_ra_test_maker');
-      return;
-    }
-
-    // If it's internal interactive app
-    if (app.is_internal || app.url.startsWith('internal:')) {
-      onOpenApp(app.id);
-      return;
-    }
-
-    // Fallback notice
-    alert(`App link is configured as: ${app.url}. The website owner can configure live URLs in Admin Dashboard.`);
+    // Open all apps, games, and website links in the In-App Viewer
+    onOpenApp(app.id);
   };
 
   return (

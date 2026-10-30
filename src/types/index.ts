@@ -59,6 +59,7 @@ export interface EducationalResource {
   lyrics_sd?: string;
   lyrics_ur?: string;
   lyrics_en?: string;
+  folder?: string;
 }
 
 export interface AppLink {
@@ -79,6 +80,7 @@ export interface AppLink {
   is_active: boolean;
   sort_order: number;
   badge?: string;
+  folder?: string;
 }
 
 export type EducationalApp = AppLink;
@@ -151,3 +153,28 @@ export interface EducationalFolder {
   badge?: string;
   gradient: string;
 }
+
+export interface InAppViewerItem {
+  id?: string;
+  title: string;
+  url: string;
+  type: 'video' | 'youtube' | 'game' | 'app' | 'pdf' | 'website' | 'other';
+  folder?: string;
+  description?: string;
+  thumbnailUrl?: string;
+  lyrics?: string;
+  downloadUrl?: string;
+  fileFormat?: string;
+}
+
+export interface FolderCategory {
+  id: string; // 'all', 'books', 'games', 'videos', 'apps', 'extra' or custom id
+  name_sd: string;
+  name_ur: string;
+  name_en: string;
+  icon?: string;
+  color?: string;
+  isSystem?: boolean;
+  sort_order: number;
+}
+

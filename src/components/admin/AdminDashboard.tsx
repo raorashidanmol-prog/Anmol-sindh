@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { EducationalResource, AppLink, HeroBanner, SiteSettings, AuditLog } from '../../types';
 import { 
   X, 
   ShieldCheck, 
@@ -12,7 +11,8 @@ import {
   EyeOff,
   Camera,
   Download, 
-  RefreshCw, 
+  RefreshCw,
+  RotateCw,
   BarChart3, 
   FileText, 
   Settings, 
@@ -27,8 +27,14 @@ import {
   Sparkles,
   Image as ImageIcon,
   Folder,
+  FolderPlus,
+  ArrowRightLeft,
+  Search,
+  Filter,
+  Check,
   ExternalLink
 } from 'lucide-react';
+import { EducationalResource, AppLink, HeroBanner, SiteSettings, AuditLog, FolderCategory } from '../../types';
 import {
   isStaticHosting,
   authenticateOwner,
@@ -45,6 +51,13 @@ import {
   saveStoredApp,
   deleteStoredApp,
   getStoredAuditLogs,
+  getStoredFolders,
+  saveStoredFolder,
+  deleteStoredFolder,
+  moveItemToFolder,
+  deleteAnyItem,
+  resolveItemFolder,
+  resetDefaultData,
   safeFetchJson,
 } from '../../utils/staticStorage';
 
@@ -54,6 +67,7 @@ interface AdminDashboardProps {
   onDataChanged: () => void;
   initialResources: EducationalResource[];
   initialApps: AppLink[];
+  initialTab?: 'overview' | 'manage' | 'content' | 'apps' | 'folders' | 'settings' | 'logs' | 'backup';
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -62,6 +76,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onDataChanged,
   initialResources,
   initialApps,
+  initialTab,
 }) => {
   // Authentication State
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('anmol_admin_token'));
@@ -79,11 +94,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [showRecoveryPassword, setShowRecoveryPassword] = useState(false);
 
   // Active Admin Tab
-  const [adminTab, setAdminTab] = useState<'overview' | 'content' | 'apps' | 'settings' | 'logs' | 'backup'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'manage' | 'content' | 'apps' | 'folders' | 'settings' | 'logs' | 'backup'>(initialTab || 'manage');
+
+  useEffect(() => {
+    if (initialTab && isOpen) {
+      setAdminTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
 
   // Stats
   const [stats, setStats] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+
+  // Folders State
+  const [folders, setFolders] = useState<FolderCategory[]>(() => getStoredFolders());
+  const [newFolderNameSd, setNewFolderNameSd] = useState('');
+  const [newFolderNameUr, setNewFolderNameUr] = useState('');
+  const [newFolderNameEn, setNewFolderNameEn] = useState('');
+  const [newFolderIcon, setNewFolderIcon] = useState('Folder');
+  const [newFolderColor, setNewFolderColor] = useState('#00e599');
+
+  // Unified Content Management State
+  const [manageSearchQuery, setManageSearchQuery] = useState('');
+  const [manageFolderFilter, setManageFolderFilter] = useState('all');
 
   // Content Management State
   const [resources, setResources] = useState<EducationalResource[]>(initialResources);
@@ -132,14 +165,93 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setAuditLogs(logs as any);
 
     const resList = getStoredResources();
+    setResources(resList);
+
+    const appList = getStoredApps();
+    setApps(appList);
+
+    const folderList = getStoredFolders();
+    setFolders(folderList);
+
+    const byType: Record<string, number> = {};
+    const byClass: Record<string, number> = {};
+    let totalViews = 0;
+    let totalDownloads = 0;
+
+    resList.forEach((r) => {
+      byType[r.content_type] = (byType[r.content_type] || 0) + 1;
+      byClass[r.class_level] = (byClass[r.class_level] || 0) + 1;
+      totalViews += r.views_count || 0;
+      totalDownloads += r.downloads_count || 0;
+    });
+
     setStats({
-      totalUsers: 1,
-      totalContent: resList.length,
-      publishedContent: resList.filter((r) => r.published).length,
-      totalDownloads: resList.reduce((acc, r) => acc + (r.downloads_count || 0), 0),
-      storageUsedMb: 124.5,
-      backupStatus: 'Healthy (Local Storage Auto-Synced)',
-    } as any);
+      totalResources: resList.length + appList.length,
+      publishedCount: resList.filter((r) => r.published).length + appList.filter((a) => a.is_active).length,
+      totalViews,
+      totalDownloads,
+      storageMB: 48.6,
+      byType,
+      byClass,
+    });
+  };
+
+  // Move Item to Another Folder Handler
+  const handleMoveItem = (itemId: string, targetFolderId: string) => {
+    moveItemToFolder(itemId, targetFolderId);
+    loadAdminData(authToken || '');
+    onDataChanged();
+  };
+
+  // Delete ANY Item (Resource or App) - Permanent Remove
+  const handleDeleteAnyItem = (itemId: string) => {
+    deleteAnyItem(itemId);
+    setDeleteConfirmId(null);
+    loadAdminData(authToken || '');
+    onDataChanged();
+  };
+
+  // Create New Folder
+  const handleCreateFolder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFolderNameEn && !newFolderNameSd) return;
+    saveStoredFolder({
+      name_sd: newFolderNameSd || newFolderNameEn,
+      name_ur: newFolderNameUr || newFolderNameEn,
+      name_en: newFolderNameEn || newFolderNameSd,
+      icon: newFolderIcon,
+      color: newFolderColor,
+    });
+    setFolders(getStoredFolders());
+    setNewFolderNameSd('');
+    setNewFolderNameUr('');
+    setNewFolderNameEn('');
+    onDataChanged();
+    alert('✓ نئون فولڊر ڪاميابيءَ سان شامل ڪيو ويو ۽ بٽڻ بار ۾ ظاهر ٿي ويو! (New Folder created and added to Button Bar!)');
+  };
+
+  // Delete Folder
+  const handleDeleteFolder = (folderId: string) => {
+    if (confirm('ڇا توهان هي فولڊر ڊليٽ ڪرڻ چاهيو ٿا؟ ان جا مواد Extra ۾ منتقل ٿي ويندا. (Delete this folder? Its contents will move to Extra)')) {
+      try {
+        deleteStoredFolder(folderId);
+        setFolders(getStoredFolders());
+        loadAdminData(authToken || '');
+        onDataChanged();
+      } catch (err: any) {
+        alert(err.message);
+      }
+    }
+  };
+
+  // Reset to Default Seed Data
+  const handleResetDefaultData = () => {
+    if (confirm('ڇا توهان واقعي سڀ مواد بنيادي نصابي مواد تي ري سيٽ ڪرڻ چاهيو ٿا؟ (Reset database to default seed data?)')) {
+      resetDefaultData();
+      loadAdminData(authToken || '');
+      onDataChanged();
+      alert('Database restored to default educational items.');
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -855,6 +967,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Sidebar Navigation */}
             <div className="w-full md:w-56 bg-slate-950/60 border-b md:border-b-0 md:border-r border-slate-800 p-3 space-y-1 shrink-0 overflow-x-auto md:overflow-visible flex md:flex-col">
               <button
+                onClick={() => setAdminTab('manage')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                  adminTab === 'manage' ? 'bg-[#00e599] text-black font-bold shadow-md shadow-[#00e599]/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>Manage Content (سمورو مواد)</span>
+              </button>
+
+              <button
+                onClick={() => setAdminTab('folders')}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
+                  adminTab === 'folders' ? 'bg-[#00e599] text-black font-bold shadow-md shadow-[#00e599]/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Folder className="w-4 h-4" />
+                <span>Folder Bar (بٽڻ بار)</span>
+              </button>
+
+              <button
                 onClick={() => setAdminTab('overview')}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer ${
                   adminTab === 'overview' ? 'bg-emerald-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -918,6 +1050,465 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Main Tab Content Area */}
             <div className="flex-1 p-5 sm:p-7 overflow-y-auto max-h-[82vh]">
               
+              {/* ============================================================ */}
+              {/* TAB: MANAGE ALL CONTENT (3 CONTROLS: EDIT, MOVE, DELETE)     */}
+              {/* ============================================================ */}
+              {adminTab === 'manage' && (
+                <div className="space-y-6">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-white font-sindhi">
+                          سمورو مواد سنڀاليو (Manage All Content)
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                          {resources.length + apps.length} Items
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5 font-sindhi">
+                        هتي توهان سڀ ڪارڊ، وڊيو لنڪس، ڪتاب، رانديون ۽ ايپس ڏسي، تبديل (Edit)، ٻئي فولڊر ۾ منتقل (Move)، يا ڊليٽ (Delete) ڪري سگهو ٿا. ڪو به مواد لاڪ ٿيل ناهي.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setCurrentEditResource({
+                            title_sd: '',
+                            title_ur: '',
+                            title_en: '',
+                            description_sd: '',
+                            description_ur: '',
+                            description_en: '',
+                            class_level: '1',
+                            subject: 'Sindhi',
+                            language: 'sd',
+                            category: 'educational_videos',
+                            content_type: 'video',
+                            media_url: '',
+                            thumbnail_url: '',
+                            downloadable: true,
+                            published: true,
+                            folder: manageFolderFilter !== 'all' ? manageFolderFilter : 'videos',
+                          });
+                          setIsEditingResource(true);
+                          setAdminTab('content');
+                        }}
+                        className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-[#00e599] hover:from-emerald-500 hover:to-[#00f7a5] text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-[#00e599]/20 transition-all shrink-0 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span className="font-sindhi">نئون لنڪ / وڊيو شامل ڪريو +</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Search & Folder Filters */}
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {/* Search Input */}
+                      <div className="relative flex-1">
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={manageSearchQuery}
+                          onChange={(e) => setManageSearchQuery(e.target.value)}
+                          placeholder="ٽائٽل، وڊيو لنڪ، ڪلاس يا موضوع ڳولهيو... (Search content, URL, subject...)"
+                          className="w-full text-xs pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#00e599]"
+                        />
+                        {manageSearchQuery && (
+                          <button
+                            onClick={() => setManageSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Reset Default Seed Data Button */}
+                      <button
+                        onClick={handleResetDefaultData}
+                        className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-amber-400 rounded-xl text-xs font-semibold border border-slate-800 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                        title="Restore original default items"
+                      >
+                        <RotateCw className="w-3.5 h-3.5" />
+                        <span>Reset Default Items</span>
+                      </button>
+                    </div>
+
+                    {/* Folder Filter Pills */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                      <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                        <Filter className="w-3 h-3 text-[#00e599]" />
+                        <span>Filter:</span>
+                      </span>
+                      {folders.map((f) => {
+                        const isSelected = manageFolderFilter === f.id;
+                        return (
+                          <button
+                            key={f.id}
+                            onClick={() => setManageFolderFilter(f.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                              isSelected
+                                ? 'bg-[#00e599] text-black shadow-md shadow-[#00e599]/20'
+                                : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+                            }`}
+                          >
+                            <span>{f.name_en}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Content Cards / Table with 3 Controls */}
+                  {(() => {
+                    const unified = [
+                      ...resources.map((r) => ({
+                        id: r.id,
+                        title: r.title_sd || r.title_en,
+                        titleSub: r.title_en,
+                        folder: resolveItemFolder(r),
+                        type: r.content_type,
+                        url: r.media_url,
+                        thumbnail: r.thumbnail_url,
+                        classLevel: r.class_level,
+                        subject: r.subject,
+                        isApp: false,
+                        rawItem: r,
+                      })),
+                      ...apps.map((a) => ({
+                        id: a.id,
+                        title: a.title_sd || a.title_en,
+                        titleSub: a.title_en,
+                        folder: resolveItemFolder(a),
+                        type: 'app',
+                        url: a.url,
+                        thumbnail: a.thumbnail_url || a.first_screen_image,
+                        classLevel: 'all',
+                        subject: a.category,
+                        isApp: true,
+                        rawItem: a,
+                      })),
+                    ];
+
+                    const filtered = unified.filter((item) => {
+                      const matchesSearch =
+                        !manageSearchQuery ||
+                        item.title.toLowerCase().includes(manageSearchQuery.toLowerCase()) ||
+                        (item.titleSub && item.titleSub.toLowerCase().includes(manageSearchQuery.toLowerCase())) ||
+                        item.url.toLowerCase().includes(manageSearchQuery.toLowerCase()) ||
+                        (item.subject && item.subject.toLowerCase().includes(manageSearchQuery.toLowerCase()));
+                      const matchesFolder = manageFolderFilter === 'all' || item.folder === manageFolderFilter;
+                      return matchesSearch && matchesFolder;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="p-12 text-center bg-slate-950/50 rounded-2xl border border-slate-800 space-y-3">
+                          <Layers className="w-10 h-10 text-slate-600 mx-auto" />
+                          <p className="text-slate-300 font-bold font-sindhi">ڪو به مواد نه مليو (No matching items found)</p>
+                          <p className="text-xs text-slate-500">
+                            {manageSearchQuery ? 'Try a different search query or folder filter.' : 'All items in this folder have been deleted or moved.'}
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-3">
+                        <div className="text-xs text-slate-400 font-mono">
+                          Showing {filtered.length} of {unified.length} items
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3">
+                          {filtered.map((item) => {
+                            const currentFolderObj = folders.find((f) => f.id === item.folder) || {
+                              id: item.folder,
+                              name_en: item.folder,
+                              name_sd: item.folder,
+                              color: '#00e599',
+                            };
+
+                            return (
+                              <div
+                                key={item.id}
+                                className="p-3.5 sm:p-4 rounded-xl bg-slate-950/80 border border-slate-800/90 hover:border-[#00e599]/30 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md"
+                              >
+                                {/* Left: Thumbnail & Details */}
+                                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shrink-0 relative flex items-center justify-center">
+                                    {item.thumbnail ? (
+                                      <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <Layers className="w-6 h-6 text-slate-600" />
+                                    )}
+                                    <span className="absolute bottom-0 right-0 px-1 py-0.2 bg-black/80 text-[9px] font-mono font-bold text-white uppercase rounded-tl">
+                                      {item.type}
+                                    </span>
+                                  </div>
+
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="text-sm font-bold text-white font-sindhi truncate max-w-sm">
+                                        {item.title}
+                                      </h4>
+                                      
+                                      {/* Folder Tag */}
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold font-mono bg-slate-900 text-[#00e599] border border-[#00e599]/30">
+                                        📁 {currentFolderObj.name_en}
+                                      </span>
+
+                                      {item.classLevel && item.classLevel !== 'all' && (
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">
+                                          Class {item.classLevel}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {item.titleSub && (
+                                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                                        {item.titleSub}
+                                      </p>
+                                    )}
+
+                                    <p className="text-[11px] text-slate-500 font-mono truncate mt-0.5 max-w-md">
+                                      {item.url}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Right: The 3 Requested Controls */}
+                                <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/80 shrink-0">
+                                  
+                                  {/* CONTROL 1: EDIT */}
+                                  <button
+                                    onClick={() => {
+                                      if (item.isApp) {
+                                        setCurrentEditApp(item.rawItem as AppLink);
+                                        setIsEditingApp(true);
+                                        setAdminTab('apps');
+                                      } else {
+                                        setCurrentEditResource(item.rawItem as EducationalResource);
+                                        setIsEditingResource(true);
+                                        setAdminTab('content');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-slate-900 hover:bg-[#00e599]/20 text-slate-200 hover:text-[#00e599] rounded-lg text-xs font-bold border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    title="Edit this card / link"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5 text-[#00e599]" />
+                                    <span className="font-sindhi">ايڊٽ (Edit)</span>
+                                  </button>
+
+                                  {/* CONTROL 2: MOVE TO ANOTHER FOLDER */}
+                                  <div className="relative">
+                                    <select
+                                      value={item.folder}
+                                      onChange={(e) => handleMoveItem(item.id, e.target.value)}
+                                      className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-teal-300 rounded-lg text-xs font-bold border border-slate-700 cursor-pointer focus:ring-1 focus:ring-[#00e599]"
+                                      title="Move to another folder in Button Bar"
+                                    >
+                                      <option disabled value="">Move Folder...</option>
+                                      {folders.map((f) => (
+                                        <option key={f.id} value={f.id}>
+                                          📂 {f.name_en} ({f.name_sd})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+
+                                  {/* CONTROL 3: DELETE / REMOVE */}
+                                  <button
+                                    onClick={() => {
+                                      if (confirm(`ڇا توهان واقعي هي مواد هٽائڻ چاهيو ٿا؟\n\n"${item.title}"\n\n(Are you sure you want to permanently delete this item?)`)) {
+                                        handleDeleteAnyItem(item.id);
+                                      }
+                                    }}
+                                    className="px-2.5 py-1.5 bg-rose-950/40 hover:bg-rose-900 text-rose-300 rounded-lg text-xs font-bold border border-rose-800/60 flex items-center gap-1 transition-colors cursor-pointer"
+                                    title="Permanently Delete Item"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span className="font-sindhi">ڊليٽ (Delete)</span>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* ============================================================ */}
+              {/* TAB: FOLDER BAR SYSTEM (CREATE, VIEW, DELETE CUSTOM FOLDERS) */}
+              {/* ============================================================ */}
+              {adminTab === 'folders' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-white font-sindhi">
+                      بٽڻ بار ۽ فولڊر سسٽم (Folder Bar System)
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5 font-sindhi">
+                      هتي توهان نوان فولڊر ٺاهي سگهو ٿا، جيڪي سڌو سنئون ويب سائيٽ جي مٿئين بٽڻ بار ۾ ظاهر ٿيندا. جڏهن به توهان نئون لنڪ يا وڊيو محفوظ ڪندا، توهان ان کي پنهنجي پسند جي فولڊر ۾ رکي سگهندا.
+                    </p>
+                  </div>
+
+                  {/* Create New Folder Form */}
+                  <form onSubmit={handleCreateFolder} className="p-4 sm:p-5 rounded-2xl bg-slate-950/70 border border-[#00e599]/30 space-y-4 shadow-xl">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+                      <FolderPlus className="w-4 h-4 text-[#00e599]" />
+                      <h4 className="text-sm font-bold text-white font-sindhi">
+                        نئون فولڊر شامل ڪريو (Create New Button Bar Folder)
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">فولڊر جو نالو (سنڌي)</label>
+                        <input
+                          type="text"
+                          required
+                          value={newFolderNameSd}
+                          onChange={(e) => setNewFolderNameSd(e.target.value)}
+                          placeholder="مثال: ٻاراڻا گيت، قرآن سبق..."
+                          className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-sindhi"
+                          dir="rtl"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">نام فولڈر (اردو)</label>
+                        <input
+                          type="text"
+                          value={newFolderNameUr}
+                          onChange={(e) => setNewFolderNameUr(e.target.value)}
+                          placeholder="مثال: بچوں کے گیت..."
+                          className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-urdu"
+                          dir="rtl"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">Folder Name (English)</label>
+                        <input
+                          type="text"
+                          required
+                          value={newFolderNameEn}
+                          onChange={(e) => setNewFolderNameEn(e.target.value)}
+                          placeholder="e.g. Nursery Rhymes, Math Puzzles..."
+                          className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">Icon</label>
+                        <select
+                          value={newFolderIcon}
+                          onChange={(e) => setNewFolderIcon(e.target.value)}
+                          className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold"
+                        >
+                          <option value="Folder">📁 Folder</option>
+                          <option value="BookOpen">📚 BookOpen</option>
+                          <option value="Gamepad2">🎮 Gamepad2</option>
+                          <option value="Video">🎬 Video</option>
+                          <option value="Smartphone">📱 Smartphone</option>
+                          <option value="Sparkles">✨ Sparkles</option>
+                          <option value="Layers">📑 Layers</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">Folder Color</label>
+                        <select
+                          value={newFolderColor}
+                          onChange={(e) => setNewFolderColor(e.target.value)}
+                          className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white font-bold"
+                        >
+                          <option value="#00e599">Pierrot Green (#00e599)</option>
+                          <option value="#38bdf8">Sky Blue (#38bdf8)</option>
+                          <option value="#c084fc">Purple (#c084fc)</option>
+                          <option value="#fbbf24">Amber (#fbbf24)</option>
+                          <option value="#f472b6">Pink (#f472b6)</option>
+                        </select>
+                      </div>
+
+                      <div className="col-span-2 flex items-end">
+                        <button
+                          type="submit"
+                          className="w-full py-2 bg-gradient-to-r from-emerald-600 to-[#00e599] hover:from-emerald-500 hover:to-[#00f7a5] text-slate-950 font-bold rounded-xl text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <Plus className="w-4 h-4 stroke-[2.5]" />
+                          <span>محفوظ ڪريو ۽ بٽڻ بار ۾ لڳايو (Add to Button Bar)</span>
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+
+                  {/* Existing Folders List */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                      Active Button Bar Folders ({folders.length})
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {folders.map((f) => {
+                        const count = [
+                          ...resources.filter((r) => resolveItemFolder(r) === f.id),
+                          ...apps.filter((a) => resolveItemFolder(a) === f.id),
+                        ].length;
+
+                        return (
+                          <div
+                            key={f.id}
+                            className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-3 shadow-md"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className="w-9 h-9 rounded-lg flex items-center justify-center text-black font-bold shrink-0"
+                                style={{ backgroundColor: f.color || '#00e599' }}
+                              >
+                                <Folder className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-white font-sindhi truncate">
+                                    {f.name_sd}
+                                  </span>
+                                  {f.isSystem && (
+                                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-slate-800 text-slate-400 font-mono">
+                                      System
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-slate-400 truncate">
+                                  {f.name_en} • <span className="text-[#00e599] font-bold">{count} items</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            {!f.isSystem && (
+                              <button
+                                onClick={() => handleDeleteFolder(f.id)}
+                                className="p-1.5 text-rose-400 hover:text-rose-200 hover:bg-rose-950/50 rounded-lg transition-colors cursor-pointer"
+                                title="Delete Custom Folder"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* ============================================================ */}
               {/* TAB 1: OVERVIEW & STATS */}
               {/* ============================================================ */}
@@ -1205,8 +1796,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </div>
 
-                      {/* Grade, Subject, Category, Media Type */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* Grade, Subject, Category, Media Type, Folder */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">Class</label>
                           <select
@@ -1267,9 +1858,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             onChange={(e) => setCurrentEditResource({ ...currentEditResource, content_type: e.target.value as any })}
                             className="w-full text-xs px-3 py-2 bg-slate-800 border border-[#00e599]/40 rounded-lg text-white font-semibold"
                           >
-                            <option value="video">Video (MP4 / WebM / YouTube URL)</option>
-                            <option value="pdf">Worksheet / Curriculum Book (Read-Only PDF)</option>
+                            <option value="video">Video (MP4 / WebM / YouTube)</option>
+                            <option value="pdf">Worksheet / Book (Read PDF)</option>
                             <option value="interactive">Interactive Game</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-[#00e599] mb-1">Target Folder (بٽڻ بار)</label>
+                          <select
+                            value={currentEditResource?.folder || resolveItemFolder(currentEditResource || {})}
+                            onChange={(e) => setCurrentEditResource({ ...currentEditResource, folder: e.target.value })}
+                            className="w-full text-xs px-3 py-2 bg-slate-800 border border-[#00e599]/40 rounded-lg text-white font-semibold"
+                          >
+                            {folders.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.icon} {f.name_en} ({f.name_sd})
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -1690,8 +2296,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         )}
                       </div>
 
-                      {/* Description & Category */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Description, Category & Folder */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">Description (English)</label>
                           <textarea
@@ -1719,6 +2325,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               className="w-1/2 text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                             />
                           </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-[#00e599] mb-1">Target Folder (فولڊر بار ڪيٽيگري)</label>
+                          <select
+                            value={currentEditApp.folder || resolveItemFolder(currentEditApp)}
+                            onChange={(e) => setCurrentEditApp({ ...currentEditApp, folder: e.target.value })}
+                            className="w-full text-xs px-3 py-2 bg-slate-800 border border-[#00e599]/40 rounded-lg text-white font-semibold"
+                          >
+                            {folders.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.icon} {f.name_en} ({f.name_sd})
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
 
