@@ -24,6 +24,14 @@ import { PdfReaderModal } from './components/pdf/PdfReaderModal';
 import { GamesSectionFrame } from './components/games/GamesSectionFrame';
 import { InteractiveGamesModal } from './components/games/InteractiveGamesModal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import {
+  isStaticHosting,
+  getStoredSettings,
+  getStoredResources,
+  getStoredApps,
+  getStoredOwnerSession,
+  safeFetchJson,
+} from './utils/staticStorage';
 
 function MainApp() {
   const { language } = useLanguage();
@@ -53,39 +61,56 @@ function MainApp() {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
   const fetchAppData = () => {
-    // Check admin session
+    // If running on GitHub Pages / static hosting without backend
+    if (isStaticHosting()) {
+      const session = getStoredOwnerSession();
+      setIsAdminLoggedIn(!!session.token);
+
+      const localSettings = getStoredSettings();
+      setSiteSettings(localSettings);
+
+      const localResources = getStoredResources();
+      setResources(localResources);
+      setLoading(false);
+
+      const localApps = getStoredApps();
+      setApps(localApps);
+      return;
+    }
+
+    // Full-stack / server mode with safe fallback
     const token = localStorage.getItem('anmol_admin_token');
     if (token) {
-      fetch('/api/admin/me', { headers: { Authorization: `Bearer ${token}` } })
-        .then((res) => setIsAdminLoggedIn(res.ok))
-        .catch(() => setIsAdminLoggedIn(false));
+      safeFetchJson('/api/admin/me', { headers: { Authorization: `Bearer ${token}` } })
+        .then(() => setIsAdminLoggedIn(true))
+        .catch(() => {
+          const session = getStoredOwnerSession();
+          setIsAdminLoggedIn(!!session.token);
+        });
     } else {
       setIsAdminLoggedIn(false);
     }
 
-    // Load site settings (branding, logo, text)
-    fetch('/api/settings')
-      .then((res) => res.json())
+    // Load site settings
+    safeFetchJson('/api/settings')
       .then((data) => setSiteSettings(data))
-      .catch((err) => console.error('Failed to load settings:', err));
+      .catch(() => setSiteSettings(getStoredSettings()));
 
     // Load content
-    fetch('/api/content')
-      .then((res) => res.json())
+    safeFetchJson('/api/content')
       .then((data) => {
         setResources(data.resources || []);
         setLoading(false);
       })
-      .catch((err) => {
-        console.error('Failed to load content:', err);
+      .catch(() => {
+        setResources(getStoredResources());
         setLoading(false);
       });
 
     // Load apps
-    fetch('/api/apps')
-      .then((res) => res.json())
+    safeFetchJson('/api/apps')
       .then((data) => setApps(data || []))
-      .catch((err) => console.error('Failed to load apps:', err));
+      .catch(() => setApps(getStoredApps()));
   };
 
   useEffect(() => {

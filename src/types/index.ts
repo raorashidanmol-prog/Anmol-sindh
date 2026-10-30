@@ -81,6 +81,8 @@ export interface AppLink {
   badge?: string;
 }
 
+export type EducationalApp = AppLink;
+
 export interface HeroBanner {
   id: string;
   title_sd: string;
