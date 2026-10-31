@@ -17,6 +17,9 @@ export type ContentCategory =
   | 'audio_poems'
   | 'animated_stories'
   | 'educational_videos'
+  | 'kids_learning'
+  | 'islamic_moral_stories'
+  | 'cartoon_videos'
   | 'lessons_explanations'
   | 'rhymes_nursery'
   | 'english_vocabulary'
@@ -24,6 +27,10 @@ export type ContentCategory =
   | 'urdu_learning'
   | 'worksheets_pdf'
   | 'educational_games'
+  | 'maths_games'
+  | 'english_games'
+  | 'urdu_sindhi_games'
+  | 'fun_puzzle_games'
   | 'tests_quizzes';
 
 export type MediaFormat = 'audio' | 'video' | 'pdf' | 'interactive' | 'image';

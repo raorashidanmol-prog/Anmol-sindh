@@ -20,18 +20,21 @@ import {
 import { InAppViewerItem } from '../../types';
 import { getYouTubeVideoId, detectMediaType } from '../../utils/staticStorage';
 import { useLanguage } from '../../context/LanguageContext';
+import { GameLoadingScreen } from '../games/GameLoadingScreen';
 
 interface InAppViewerProps {
   item: InAppViewerItem | null;
   onClose: () => void;
   onSelectRelated?: (item: InAppViewerItem) => void;
+  logoUrl?: string;
 }
 
-export const InAppViewer: React.FC<InAppViewerProps> = ({ item, onClose }) => {
+export const InAppViewer: React.FC<InAppViewerProps> = ({ item, onClose, logoUrl }) => {
   const { language } = useLanguage();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [iframeLoading, setIframeLoading] = useState(true);
+  const [gameIntroLoading, setGameIntroLoading] = useState(true);
   const [iframeError, setIframeError] = useState(false);
   const [pdfMode, setPdfMode] = useState<'google' | 'direct'>('google');
   const [showDetails, setShowDetails] = useState(false);
@@ -70,6 +73,7 @@ export const InAppViewer: React.FC<InAppViewerProps> = ({ item, onClose }) => {
   useEffect(() => {
     setIframeLoading(true);
     setIframeError(false);
+    setGameIntroLoading(true);
     const timer = setTimeout(() => {
       setIframeLoading(false);
     }, 1500);
@@ -139,11 +143,28 @@ export const InAppViewer: React.FC<InAppViewerProps> = ({ item, onClose }) => {
   const badge = getTypeBadge();
   const BadgeIcon = badge.icon;
 
+  const backLabel = detectedType === 'game' || item.folder === 'games'
+    ? 'Back to Games'
+    : detectedType === 'youtube' || detectedType === 'video' || item.folder === 'videos'
+    ? 'Back to Videos'
+    : 'Back to Hub';
+
   return (
     <div
       ref={containerRef}
       className="fixed inset-0 z-50 bg-[#0f172a] flex flex-col text-slate-100 overflow-hidden animate-in fade-in duration-200"
     >
+      {/* 0. ANIMATED ANMOL SINDH GAME LOADING SCREEN */}
+      {detectedType === 'game' && gameIntroLoading && (
+        <GameLoadingScreen
+          gameTitle={item.title}
+          gameCategory={item.folder === 'games' ? 'Online Primary Game' : badge.label}
+          logoUrl={logoUrl}
+          isLoading={gameIntroLoading}
+          onFinishLoading={() => setGameIntroLoading(false)}
+        />
+      )}
+
       {/* ======================================================== */}
       {/* TOP VIEWER HEADER                                       */}
       {/* ======================================================== */}
@@ -157,7 +178,7 @@ export const InAppViewer: React.FC<InAppViewerProps> = ({ item, onClose }) => {
             title="Return to previous screen"
           >
             <ArrowLeft className="w-4 h-4 stroke-[3]" />
-            <span>Back to Hub</span>
+            <span>{backLabel}</span>
           </button>
 
           <div className="flex flex-col min-w-0">

@@ -174,7 +174,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 : 'text-slate-600 hover:text-rose-600 hover:bg-rose-50'
             }`}
           >
-            <Gamepad2 className="w-4 h-4 text-rose-500" />
+            <Gamepad2 className={`w-4 h-4 ${activeTab === 'apps' ? 'text-white' : 'text-rose-500'}`} />
             <span>Games</span>
           </button>
 
@@ -187,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 : 'text-slate-600 hover:text-red-600 hover:bg-red-50'
             }`}
           >
-            <Video className="w-4 h-4 text-red-500" />
+            <Video className={`w-4 h-4 ${activeTab === 'videos' ? 'text-white' : 'text-red-500'}`} />
             <span>Videos</span>
           </button>
 
@@ -200,7 +200,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 : 'text-slate-600 hover:text-emerald-600 hover:bg-emerald-50'
             }`}
           >
-            <Puzzle className="w-4 h-4 text-emerald-500" />
+            <Puzzle className={`w-4 h-4 ${activeTab === 'stories' ? 'text-white' : 'text-emerald-500'}`} />
             <span>Activities</span>
           </button>
 

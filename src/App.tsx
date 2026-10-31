@@ -23,6 +23,8 @@ import { HomeMediaBoxes } from './components/home/HomeMediaBoxes';
 import { ContentLibrary } from './components/content/ContentLibrary';
 import { DownloadCenter } from './components/download/DownloadCenter';
 import { GamesSectionFrame } from './components/games/GamesSectionFrame';
+import { InteractiveVideoSection } from './components/videos/InteractiveVideoSection';
+import { InteractiveGamesSection } from './components/games/InteractiveGamesSection';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import {
   isStaticHosting,
@@ -662,9 +664,18 @@ function MainApp() {
                   </>
                 )}
 
-                {/* VIDEO GALLERY VIEW */}
+                {/* VIDEO GALLERY VIEW - INTERACTIVE YOUTUBE VIDEOS */}
                 {activeTab === 'videos' && (
-                  <div className="space-y-8 py-6">
+                  <div className="space-y-10 py-6">
+                    <InteractiveVideoSection
+                      videos={resources}
+                      onWatchVideo={handleWatchVideo}
+                      isAdminLoggedIn={isAdminLoggedIn}
+                      onOpenAdminAdd={() => {
+                        setAdminInitialTab('manage');
+                        setAdminOpen(true);
+                      }}
+                    />
                     <AutoVideoCarousel
                       videos={resources}
                       onWatchVideo={handleWatchVideo}
@@ -705,9 +716,18 @@ function MainApp() {
                   />
                 )}
 
-                {/* GAMES & APPS VIEW WITH PLAYABLE FRAME */}
+                {/* GAMES & APPS VIEW - INTERACTIVE ONLINE GAMES */}
                 {activeTab === 'apps' && (
-                  <div className="py-6 space-y-8">
+                  <div className="py-6 space-y-10">
+                    <InteractiveGamesSection
+                      games={apps}
+                      onPlayGame={handleOpenApp}
+                      isAdminLoggedIn={isAdminLoggedIn}
+                      onOpenAdminAdd={() => {
+                        setAdminInitialTab('apps');
+                        setAdminOpen(true);
+                      }}
+                    />
                     <GamesSectionFrame
                       initialGameId="math"
                       onOpenExternalModal={handleOpenApp}
@@ -739,6 +759,7 @@ function MainApp() {
         <InAppViewer
           item={viewerItem}
           onClose={() => setViewerItem(null)}
+          logoUrl={siteSettings?.logo_url}
         />
       )}
 

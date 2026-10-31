@@ -1071,7 +1071,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => {
                           setCurrentEditResource({
@@ -1082,23 +1082,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             description_ur: '',
                             description_en: '',
                             class_level: '1',
-                            subject: 'Sindhi',
-                            language: 'sd',
+                            subject: 'General Science',
+                            language: 'en',
                             category: 'educational_videos',
                             content_type: 'video',
                             media_url: '',
                             thumbnail_url: '',
-                            downloadable: true,
+                            downloadable: false,
                             published: true,
-                            folder: manageFolderFilter !== 'all' ? manageFolderFilter : 'videos',
+                            folder: 'videos',
                           });
                           setIsEditingResource(true);
                           setAdminTab('content');
                         }}
-                        className="px-3.5 py-2 bg-gradient-to-r from-emerald-600 to-[#00e599] hover:from-emerald-500 hover:to-[#00f7a5] text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-[#00e599]/20 transition-all shrink-0 cursor-pointer"
+                        className="px-3.5 py-2 bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-red-500/20 transition-all shrink-0 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                        <span className="font-sindhi">نئون لنڪ / وڊيو شامل ڪريو +</span>
+                        <span>🎬 + Add YouTube Video</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setCurrentEditApp({
+                            title_sd: '',
+                            title_ur: '',
+                            title_en: '',
+                            description_sd: '',
+                            description_ur: '',
+                            description_en: '',
+                            category: 'Educational Games',
+                            icon: 'Gamepad2',
+                            url: '',
+                            first_screen_image: '',
+                            is_active: true,
+                            sort_order: apps.length + 1,
+                            badge: 'Play Now',
+                            folder: 'games',
+                          });
+                          setIsEditingApp(true);
+                          setAdminTab('apps');
+                        }}
+                        className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-purple-500/20 transition-all shrink-0 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span>🎮 + Add Online Game</span>
                       </button>
                     </div>
                   </div>
@@ -1838,15 +1865,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             onChange={(e) => setCurrentEditResource({ ...currentEditResource, category: e.target.value as any })}
                             className="w-full text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                           >
-                            <option value="animated_stories">Animated Stories & Folk Tales</option>
-                            <option value="video_poems">Video Poems & Rhymes</option>
-                            <option value="educational_videos">Educational Videos & Lessons</option>
-                            <option value="lessons_explanations">Lessons & History Explanations</option>
-                            <option value="worksheets_pdf">Worksheets & Curriculum Books (PDF)</option>
-                            <option value="educational_games">Educational Games & Quizzes</option>
-                            <option value="tests_quizzes">RA Tests & Assessment Papers</option>
-                            <option value="sindhi_learning">Sindhi Learning & Language</option>
-                            <option value="urdu_learning">Urdu Learning & Grammar</option>
+                            <option value="educational_videos">🎬 Educational Videos & Lessons</option>
+                            <option value="kids_learning">🌟 Kids Learning Videos (ٻارن جي سکيا)</option>
+                            <option value="islamic_moral_stories">🕌 Islamic & Moral Stories (اسلامي اخلاقي)</option>
+                            <option value="cartoon_videos">🎨 Cartoon Videos & Animation</option>
+                            <option value="video_poems">🎵 Video Poems & Rhymes</option>
+                            <option value="animated_stories">📖 Animated Stories & Folk Tales</option>
+                            <option value="maths_games">🔢 Maths Games</option>
+                            <option value="english_games">🔤 English Learning Games</option>
+                            <option value="urdu_sindhi_games">📜 Urdu & Sindhi Learning Games</option>
+                            <option value="fun_puzzle_games">🧩 Fun & Puzzle Games</option>
+                            <option value="educational_games">🎮 Educational Games & Quizzes</option>
+                            <option value="worksheets_pdf">📑 Worksheets & Curriculum Books (PDF)</option>
+                            <option value="lessons_explanations">📚 Lessons & History Explanations</option>
+                            <option value="tests_quizzes">📝 RA Tests & Assessment Papers</option>
+                            <option value="sindhi_learning">سنڌي Sindhi Learning & Language</option>
+                            <option value="urdu_learning">اردو Urdu Learning & Grammar</option>
                             <option value="english_vocabulary">English Vocabulary & Phonics</option>
                           </select>
                         </div>
@@ -2312,11 +2346,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <div className="flex gap-2">
                             <input
                               type="text"
-                              value={currentEditApp.category || 'Mathematics'}
+                              list="game-category-suggestions"
+                              value={currentEditApp.category || 'Educational Games'}
                               onChange={(e) => setCurrentEditApp({ ...currentEditApp, category: e.target.value })}
-                              placeholder="Category"
+                              placeholder="Category (e.g. Maths Games)"
                               className="w-1/2 text-xs px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
                             />
+                            <datalist id="game-category-suggestions">
+                              <option value="Educational Games" />
+                              <option value="Maths Games" />
+                              <option value="English Learning Games" />
+                              <option value="Urdu & Sindhi Learning Games" />
+                              <option value="Fun & Puzzle Games" />
+                              <option value="Science Simulations" />
+                            </datalist>
                             <input
                               type="text"
                               value={currentEditApp.badge || ''}
