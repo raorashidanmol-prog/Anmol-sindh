@@ -12,6 +12,7 @@ import { Footer } from './components/layout/Footer';
 import { FolderButtonBar } from './components/layout/FolderButtonBar';
 import { InAppViewer } from './components/viewer/InAppViewer';
 import { HeroSection } from './components/home/HeroSection';
+import { SmartKidsHubSection } from './components/home/SmartKidsHubSection';
 import { ThisWeekUpdates } from './components/home/ThisWeekUpdates';
 import { AutoVideoCarousel } from './components/home/AutoVideoCarousel';
 import { FolderGrid } from './components/folders/FolderGrid';
@@ -173,8 +174,8 @@ function MainApp() {
 
   const handleWatchVideo = (video: EducationalResource) => {
     savedVideoScrollYRef.current = window.scrollY;
-    const title = language === 'sd' ? video.title_sd : language === 'ur' ? video.title_ur : video.title_en;
-    const desc = language === 'sd' ? video.description_sd : language === 'ur' ? video.description_ur : video.description_en;
+    const title = video.title_en || video.title_sd;
+    const desc = video.description_en || video.description_sd;
     openInViewer({
       id: video.id,
       title: title || video.title_en,
@@ -187,8 +188,8 @@ function MainApp() {
   };
 
   const handleOpenPdf = (pdf: EducationalResource) => {
-    const title = language === 'sd' ? pdf.title_sd : language === 'ur' ? pdf.title_ur : pdf.title_en;
-    const desc = language === 'sd' ? pdf.description_sd : language === 'ur' ? pdf.description_ur : pdf.description_en;
+    const title = pdf.title_en || pdf.title_sd;
+    const desc = pdf.description_en || pdf.description_sd;
     openInViewer({
       id: pdf.id,
       title: title || pdf.title_en,
@@ -205,8 +206,8 @@ function MainApp() {
       (a) => a.id === appId || a.title_en?.toLowerCase() === appId.toLowerCase()
     );
     if (targetApp) {
-      const title = language === 'sd' ? targetApp.title_sd : language === 'ur' ? targetApp.title_ur : targetApp.title_en;
-      const desc = language === 'sd' ? targetApp.description_sd : language === 'ur' ? targetApp.description_ur : targetApp.description_en;
+      const title = targetApp.title_en || targetApp.title_sd;
+      const desc = targetApp.description_en || targetApp.description_sd;
       openInViewer({
         id: targetApp.id,
         title: title || targetApp.title_en,
@@ -219,11 +220,11 @@ function MainApp() {
     } else {
       let url = 'https://phet.colorado.edu/sims/html/make-a-ten/latest/make-a-ten_all.html';
       let title = 'Educational Game';
-      if (appId === 'math' || appId === 'FUN_WITH_MATH_URL') {
-        title = language === 'sd' ? 'رياضي سان مزو' : 'Fun with Math';
+      if (appId === 'math' || appId === 'FUN_WITH_MATH_URL' || appId === 'app_fun_with_math') {
+        title = 'Fun with Math Game';
         url = 'https://phet.colorado.edu/sims/html/make-a-ten/latest/make-a-ten_all.html';
-      } else if (appId === 'test_maker' || appId === 'Anmol Ak _TEST_MAKER_URL') {
-        title = language === 'sd' ? 'ٽيسٽ ميڪر' : 'RA Test Maker';
+      } else if (appId === 'test_maker' || appId === 'Anmol Ak _TEST_MAKER_URL' || appId === 'app_ra_test_maker') {
+        title = 'RA Test Maker App';
         url = 'https://kahoot.it';
       }
       openInViewer({
@@ -283,7 +284,7 @@ function MainApp() {
   const currentSelectedFolderObj = folders.find((f) => f.id === selectedFolder);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#04060a] text-slate-100 selection:bg-[#00e599] selection:text-black">
+    <div className="min-h-screen flex flex-col bg-[#eef8ff] text-slate-800 selection:bg-sky-400 selection:text-white">
       
       {/* Top Navigation */}
       <Navbar
@@ -299,6 +300,7 @@ function MainApp() {
         }}
         isAdminLoggedIn={isAdminLoggedIn}
         logoUrl={siteSettings?.logo_url}
+        onSearch={handleSearch}
       />
 
       {/* Horizontal Scrollable Folder Button Bar */}
@@ -320,9 +322,9 @@ function MainApp() {
       <main className="flex-1 pb-24">
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-            <div className="w-12 h-12 border-4 border-[#00e599] border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-sindhi text-[#00e599] font-bold text-lg">
-              انمول سنڌ پورٽل لوڊ ٿي رهيو آهي...
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-heading text-blue-600 font-bold text-lg">
+              Smart Kids Learning Hub is loading...
             </p>
           </div>
         ) : (
@@ -331,27 +333,27 @@ function MainApp() {
             {/* BUTTON BAR FILTERED FOLDER VIEW */}
             {/* ============================================================ */}
             {selectedFolder !== 'all' ? (
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+              <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
                 {/* Folder Header Breadcrumb */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl backdrop-blur-md">
+                <div className="card-3d-white p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5">
                     <div 
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center text-black font-bold shadow-lg shadow-[#00e599]/20"
-                      style={{ backgroundColor: currentSelectedFolderObj?.color || '#00e599' }}
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shadow-md shadow-sky-400/25"
+                      style={{ backgroundColor: currentSelectedFolderObj?.color || '#0284c7' }}
                     >
-                      <Folder className="w-6 h-6" />
+                      <Folder className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h1 className="text-xl sm:text-2xl font-black text-white font-sindhi">
-                          {language === 'sd' ? currentSelectedFolderObj?.name_sd : language === 'ur' ? currentSelectedFolderObj?.name_ur : currentSelectedFolderObj?.name_en}
+                        <h1 className="text-xl sm:text-2xl font-heading font-black text-slate-900">
+                          {currentSelectedFolderObj?.name_en || currentSelectedFolderObj?.name_sd}
                         </h1>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-[#00e599]/15 text-[#00e599] border border-[#00e599]/30">
+                        <span className="px-3 py-0.5 rounded-full text-xs font-heading font-bold bg-sky-100 text-sky-800 border border-sky-200">
                           {folderResources.length + folderApps.length} Items
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 font-medium">
-                        {language === 'sd' ? 'مخصوص فائيل ۽ محفوظ ڪيل لنڪس' : language === 'ur' ? 'محفوظ کردہ لنکس اور تعلیمی مواد' : 'Dedicated saved links & educational resources in this folder'}
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Dedicated saved links and educational resources in this folder
                       </p>
                     </div>
                   </div>
@@ -359,10 +361,10 @@ function MainApp() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedFolder('all')}
-                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 flex items-center gap-2 cursor-pointer transition-colors"
+                      className="px-4 py-2 bg-sky-50 hover:bg-sky-100 text-slate-700 rounded-full text-xs font-heading font-bold border-2 border-sky-200 flex items-center gap-2 cursor-pointer transition-colors shadow-xs"
                     >
-                      <ArrowLeft className="w-4 h-4 text-[#00e599]" />
-                      <span>{language === 'sd' ? '← سڀ ڪلاس ڏسو' : language === 'ur' ? '← تمام کلاسز دیکھیں' : '← View All Classes'}</span>
+                      <ArrowLeft className="w-4 h-4 text-blue-600 stroke-[2.5]" />
+                      <span>← Back to All</span>
                     </button>
 
                     {isAdminLoggedIn && (
@@ -371,9 +373,9 @@ function MainApp() {
                           setAdminInitialTab('manage');
                           setAdminOpen(true);
                         }}
-                        className="px-3 py-2 bg-[#00e599]/15 hover:bg-[#00e599]/25 text-[#00e599] rounded-xl text-xs font-bold border border-[#00e599]/30 flex items-center gap-1.5 cursor-pointer transition-colors"
+                        className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full text-xs font-heading font-bold border-2 border-blue-200 flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3.5 h-3.5 stroke-[3]" />
                         <span>Manage Folder</span>
                       </button>
                     )}
@@ -382,22 +384,22 @@ function MainApp() {
 
                 {/* Content Cards Grid */}
                 {folderResources.length === 0 && folderApps.length === 0 ? (
-                  <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 space-y-4">
-                    <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-800 flex items-center justify-center text-slate-500">
-                      <Folder className="w-7 h-7" />
+                  <div className="card-3d-white p-12 text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto rounded-3xl bg-sky-100 flex items-center justify-center text-blue-600">
+                      <Folder className="w-8 h-8" />
                     </div>
                     <div className="space-y-1">
-                      <h3 className="text-base font-bold text-white font-sindhi">
-                        هن فولڊر ۾ اڃا ڪو به مواد موجود ناهي
+                      <h3 className="text-lg font-heading font-black text-slate-800">
+                        No Items in this Folder Yet
                       </h3>
-                      <p className="text-xs text-slate-400">
-                        No links or resources saved in this folder yet. Use the Admin Panel to add videos, PDFs, games, or apps!
+                      <p className="text-xs text-slate-500 max-w-md mx-auto">
+                        No links or resources saved in this folder yet. Use the Admin Dashboard to save videos, PDF books, games, or apps!
                       </p>
                     </div>
                     <div className="flex justify-center gap-3 pt-2">
                       <button
                         onClick={() => setSelectedFolder('all')}
-                        className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700 cursor-pointer"
+                        className="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-full text-xs font-heading font-bold hover:bg-slate-200 cursor-pointer"
                       >
                         Back to All Content
                       </button>
@@ -407,7 +409,7 @@ function MainApp() {
                             setAdminInitialTab('manage');
                             setAdminOpen(true);
                           }}
-                          className="px-4 py-2 bg-[#00e599] text-black font-bold rounded-xl text-xs shadow-md shadow-[#00e599]/20 cursor-pointer"
+                          className="btn-3d-blue px-5 py-2.5 rounded-full text-xs cursor-pointer"
                         >
                           + Add Content Here
                         </button>
@@ -425,35 +427,35 @@ function MainApp() {
                           else if (item.content_type === 'pdf') handleOpenPdf(item);
                           else handleWatchVideo(item);
                         }}
-                        className="group relative bg-gradient-to-b from-slate-900/90 to-slate-950/90 rounded-2xl border border-slate-800 hover:border-[#00e599]/70 overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-[#00e599]/10 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                        className="card-3d-white overflow-hidden cursor-pointer flex flex-col justify-between group hover:-translate-y-1 transition-all"
                       >
                         {/* Thumbnail */}
-                        <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
+                        <div className="relative aspect-video w-full bg-slate-900 overflow-hidden">
                           <img
                             src={item.thumbnail_url || 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&auto=format&fit=crop&q=80'}
                             alt={item.title_en}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
                           {/* Badges */}
                           <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-black/80 backdrop-blur-md text-[#00e599] border border-[#00e599]/30">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase tracking-wider bg-white/95 text-blue-700 shadow-xs border border-sky-100">
                               {item.content_type}
                             </span>
                             {item.class_level && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-900/80 backdrop-blur-md text-slate-300 border border-slate-700">
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-heading font-bold bg-amber-400 text-amber-950 shadow-xs">
                                 Class {item.class_level}
                               </span>
                             )}
                           </div>
 
                           {/* Play / Open Icon overlay on hover */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
-                            <div className="w-12 h-12 rounded-full bg-[#00e599] text-black flex items-center justify-center shadow-lg shadow-[#00e599]/40 transform scale-75 group-hover:scale-100 transition-transform">
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-blue-900/40">
+                            <div className="w-12 h-12 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
                               {item.content_type === 'video' ? (
-                                <Play className="w-5 h-5 ml-0.5 fill-black" />
+                                <Play className="w-5 h-5 ml-0.5 fill-blue-600" />
                               ) : item.content_type === 'pdf' ? (
                                 <BookOpen className="w-5 h-5" />
                               ) : (
@@ -464,26 +466,26 @@ function MainApp() {
                         </div>
 
                         {/* Info */}
-                        <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
                           <div>
-                            <h3 className="font-bold text-white text-sm line-clamp-1 group-hover:text-[#00e599] transition-colors font-sindhi">
-                              {item.title_sd || item.title_en}
+                            <h3 className="font-heading font-black text-sm text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                              {item.title_en}
                             </h3>
-                            {item.title_en && item.title_sd && (
-                              <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                                {item.title_en}
+                            {item.title_sd && (
+                              <p className="font-sindhi text-xs text-slate-500 line-clamp-1 mt-0.5">
+                                {item.title_sd}
                               </p>
                             )}
-                            {(item.description_sd || item.description_en) && (
-                              <p className="text-xs text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
-                                {item.description_sd || item.description_en}
+                            {(item.description_en || item.description_sd) && (
+                              <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                                {item.description_en || item.description_sd}
                               </p>
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-                            <span className="text-[#00e599] font-medium">{item.subject}</span>
-                            <span className="font-semibold text-slate-300 flex items-center gap-1 group-hover:text-[#00e599] transition-colors">
+                          <div className="flex items-center justify-between pt-2.5 border-t border-sky-100 text-xs text-slate-500">
+                            <span className="text-blue-600 font-heading font-bold">{item.subject}</span>
+                            <span className="font-heading font-bold text-slate-700 flex items-center gap-1 group-hover:text-blue-600 transition-colors">
                               Open in Viewer →
                             </span>
                           </div>
@@ -496,59 +498,59 @@ function MainApp() {
                       <div
                         key={app.id}
                         onClick={() => handleOpenApp(app.id)}
-                        className="group relative bg-gradient-to-b from-slate-900/90 to-slate-950/90 rounded-2xl border border-slate-800 hover:border-[#00e599]/70 overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-[#00e599]/10 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col"
+                        className="card-3d-white overflow-hidden cursor-pointer flex flex-col justify-between group hover:-translate-y-1 transition-all"
                       >
                         {/* Thumbnail / First screen image */}
-                        <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
+                        <div className="relative aspect-video w-full bg-slate-900 overflow-hidden">
                           <img
                             src={app.first_screen_image || app.thumbnail_url || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80'}
                             alt={app.title_en}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             loading="lazy"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
                           {/* Badges */}
                           <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-black/80 backdrop-blur-md text-[#00e599] border border-[#00e599]/30">
-                              Interactive App
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-heading font-bold uppercase tracking-wider bg-white/95 text-rose-600 shadow-xs border border-rose-100">
+                              App
                             </span>
                             {app.badge && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#00e599] text-black">
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-heading font-black bg-amber-400 text-amber-950">
                                 {app.badge}
                               </span>
                             )}
                           </div>
 
                           {/* Launch Icon overlay on hover */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
-                            <div className="w-12 h-12 rounded-full bg-[#00e599] text-black flex items-center justify-center shadow-lg shadow-[#00e599]/40 transform scale-75 group-hover:scale-100 transition-transform">
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-blue-900/40">
+                            <div className="w-12 h-12 rounded-full bg-white text-rose-500 flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
                               <Gamepad2 className="w-5 h-5" />
                             </div>
                           </div>
                         </div>
 
                         {/* Info */}
-                        <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
                           <div>
-                            <h3 className="font-bold text-white text-sm line-clamp-1 group-hover:text-[#00e599] transition-colors font-sindhi">
-                              {app.title_sd || app.title_en}
+                            <h3 className="font-heading font-black text-sm text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                              {app.title_en}
                             </h3>
-                            {app.title_en && app.title_sd && (
-                              <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                                {app.title_en}
+                            {app.title_sd && (
+                              <p className="font-sindhi text-xs text-slate-500 line-clamp-1 mt-0.5">
+                                {app.title_sd}
                               </p>
                             )}
-                            {(app.description_sd || app.description_en) && (
-                              <p className="text-xs text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
-                                {app.description_sd || app.description_en}
+                            {(app.description_en || app.description_sd) && (
+                              <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+                                {app.description_en || app.description_sd}
                               </p>
                             )}
                           </div>
 
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-                            <span className="text-[#00e599] font-medium">{app.category || 'App'}</span>
-                            <span className="font-semibold text-slate-300 flex items-center gap-1 group-hover:text-[#00e599] transition-colors">
+                          <div className="flex items-center justify-between pt-2.5 border-t border-sky-100 text-xs text-slate-500">
+                            <span className="text-rose-500 font-heading font-bold">{app.category || 'App'}</span>
+                            <span className="font-heading font-bold text-slate-700 flex items-center gap-1 group-hover:text-blue-600 transition-colors">
                               Play In-App →
                             </span>
                           </div>
@@ -566,7 +568,6 @@ function MainApp() {
                 {/* HOME TAB */}
                 {activeTab === 'home' && (
                   <>
-                    {/* When a specific folder is opened from FolderGrid, display ONLY that folder's contents with Back navigation */}
                     {activeFolderId ? (
                       <FolderDetailView
                         folderId={activeFolderId}
@@ -580,7 +581,7 @@ function MainApp() {
                       />
                     ) : (
                       <>
-                        {/* Hero Section */}
+                        {/* 1. HERO BANNER: Learn • Play • Grow (Panoramic Cartoon School & Kids) */}
                         <HeroSection
                           onSearch={handleSearch}
                           onSelectClass={handleSelectClass}
@@ -592,7 +593,24 @@ function MainApp() {
                           onOpenApp={handleOpenApp}
                         />
 
-                        {/* NEW UPDATES THIS WEEK FRAME (Auto-scrolling with < > navigation signs) */}
+                        {/* 2. SMART KIDS LEARNING HUB: 8 3D Subject Cards, 3 Learning Section Cards, Rainbow Banner */}
+                        <SmartKidsHubSection
+                          resources={resources}
+                          apps={apps}
+                          onWatchVideo={handleWatchVideo}
+                          onOpenPdf={handleOpenPdf}
+                          onOpenApp={handleOpenApp}
+                          onNavigateTab={(tab) => {
+                            setActiveTab(tab);
+                            setActiveFolderId(null);
+                            setSelectedFolder('all');
+                          }}
+                          onSelectSubject={(subjName) => {
+                            handleSearch(subjName);
+                          }}
+                        />
+
+                        {/* 3. NEW UPDATES THIS WEEK FRAME (Auto-scrolling with < > navigation signs) */}
                         <ThisWeekUpdates
                           resources={resources}
                           apps={apps}
@@ -602,33 +620,33 @@ function MainApp() {
                           onOpenApp={handleOpenApp}
                         />
 
-                        {/* 1. AUTOMATIC VIDEO CAROUSEL (Every 3s, Pause/Play controls, Prev/Next, Touch Swipe) */}
+                        {/* 4. AUTOMATIC VIDEO CAROUSEL (Every 3s, Pause/Play controls, Prev/Next, Touch Swipe) */}
                         <AutoVideoCarousel
                           videos={resources}
                           onWatchVideo={handleWatchVideo}
                           isPlayerOpen={viewerItem !== null}
                         />
 
-                        {/* 2. DEDICATED INTERACTIVE GAMES FRAME (Playable directly on the page!) */}
+                        {/* 5. INTERACTIVE PRIMARY EDUCATIONAL GAMES FRAME (Playable directly on the page!) */}
                         <GamesSectionFrame
                           initialGameId="math"
                           onOpenExternalModal={handleOpenApp}
                         />
 
-                        {/* 3. PROFESSIONAL FOLDER AND CATEGORY SYSTEM (Visual 3D Glass Folders) */}
+                        {/* 6. VISUAL FOLDER SYSTEM (3D Cards) */}
                         <FolderGrid
                           resources={resources}
                           apps={apps}
                           onOpenFolder={handleOpenFolder}
                         />
 
-                        {/* 4. APPS & GAMES APPS SECTION */}
+                        {/* 7. APPS & GAMES SECTION (3D First-Screen Preview Cards) */}
                         <AppsSection
                           apps={apps}
                           onOpenApp={handleOpenApp}
                         />
 
-                        {/* 5. CORE MEDIA BOXES (Video Poems, Animated Stories, Read-Only PDF Books) */}
+                        {/* 8. CORE MEDIA BOXES (Video Poems, Animated Stories, Read-Only PDF Books) */}
                         <HomeMediaBoxes
                           resources={resources}
                           onWatchVideo={handleWatchVideo}

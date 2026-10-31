@@ -78,18 +78,18 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
       {/* Title & Introduction */}
-      <div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#00e599]/15 border border-[#00e599]/40 text-[#00e599] text-xs font-bold rounded-full shadow-[0_0_12px_rgba(0,229,153,0.2)]">
-          <ArrowDownToLine className="w-3.5 h-3.5" />
-          <span>{language === 'sd' ? 'مفت تعليمي مواد ڊائون لوڊ' : 'مفت تعلیمی مواد ڈاؤن لوڈ سینٹر'}</span>
+      <div className="text-center max-w-3xl mx-auto space-y-3">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 border-2 border-blue-200 text-blue-700 text-xs font-heading font-black rounded-full shadow-xs">
+          <ArrowDownToLine className="w-4 h-4 text-blue-600" />
+          <span>{language === 'sd' ? 'مفت تعليمي مواد ڊائون لوڊ' : 'Free Learning Resources & Downloads'}</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-sindhi">
+        <h1 className="text-3xl sm:text-4xl font-heading font-black text-slate-900 leading-snug">
           {language === 'sd' ? 'ڊائون لوڊ سينٽر (Download Center)' : language === 'ur' ? 'ڈاؤن لوڈ سینٹر' : 'Download Center'}
         </h1>
-        <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+        <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-medium">
           {language === 'sd'
             ? 'ڪلاس 1 کان 5 تائين نصابي ورڪ شيٽس، ماڊل پيپرز، آڊيو نظمون ۽ تعليمي پي ڊي ايف ڪتاب بنا ڪنهن في جي آسانيءَ سان ڊائون لوڊ ڪريو.'
             : language === 'ur'
@@ -98,32 +98,32 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
         </p>
       </div>
 
-      {/* Filter and Search Bar - 3D Glassy Box */}
-      <div className="glass-3d-box rounded-2xl p-4 sm:p-6 mb-8 space-y-4">
+      {/* Filter and Search Bar - 3D White Box */}
+      <div className="card-3d-white p-4 sm:p-6 space-y-4">
         <div className="flex flex-col md:flex-row items-center gap-4">
           
           {/* Search Input */}
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#00e599]" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full pl-10 pr-4 py-2.5 bg-[#060a12] border border-[#00e599]/30 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00e599]"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-sky-100 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 font-medium"
             />
           </div>
 
           {/* Class Selector */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#09121f] rounded-xl border border-[#00e599]/30 shrink-0 overflow-x-auto w-full md:w-auto">
+          <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border-2 border-sky-100 shrink-0 overflow-x-auto w-full md:w-auto shadow-xs">
             {['all', '1', '2', '3', '4', '5'].map((c) => (
               <button
                 key={c}
                 onClick={() => setSelectedClass(c)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+                className={`px-3 py-1.5 text-xs font-heading font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
                   selectedClass === c
-                    ? 'bg-[#00e599] text-slate-950 shadow-[0_0_10px_rgba(0,229,153,0.4)]'
-                    : 'text-slate-300 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-blue-600'
                 }`}
               >
                 {c === 'all' ? t('allClasses') : `Class ${c}`}
@@ -132,27 +132,27 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
           </div>
 
           {/* Format Selector */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#09121f] rounded-xl border border-[#00e599]/30 shrink-0">
+          <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border-2 border-sky-100 shrink-0 shadow-xs">
             <button
               onClick={() => setSelectedFormat('all')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                selectedFormat === 'all' ? 'bg-[#00e599] text-slate-950 shadow-xs' : 'text-slate-300 hover:text-white'
+              className={`px-3 py-1.5 text-xs font-heading font-bold rounded-lg transition-all cursor-pointer ${
+                selectedFormat === 'all' ? 'bg-amber-400 text-amber-950 shadow-xs' : 'text-slate-600 hover:text-amber-600'
               }`}
             >
               All Formats
             </button>
             <button
               onClick={() => setSelectedFormat('pdf')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                selectedFormat === 'pdf' ? 'bg-[#00e599] text-slate-950 shadow-xs' : 'text-slate-300 hover:text-white'
+              className={`px-3 py-1.5 text-xs font-heading font-bold rounded-lg transition-all cursor-pointer ${
+                selectedFormat === 'pdf' ? 'bg-amber-400 text-amber-950 shadow-xs' : 'text-slate-600 hover:text-amber-600'
               }`}
             >
               PDF Worksheets
             </button>
             <button
               onClick={() => setSelectedFormat('audio')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                selectedFormat === 'audio' ? 'bg-[#00e599] text-slate-950 shadow-xs' : 'text-slate-300 hover:text-white'
+              className={`px-3 py-1.5 text-xs font-heading font-bold rounded-lg transition-all cursor-pointer ${
+                selectedFormat === 'audio' ? 'bg-amber-400 text-amber-950 shadow-xs' : 'text-slate-600 hover:text-amber-600'
               }`}
             >
               MP3 Audio
@@ -162,11 +162,11 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
         </div>
       </div>
 
-      {/* Resource Download Cards Grid - 3D Glass Cards */}
+      {/* Resource Download Cards Grid - 3D White Cards */}
       {filtered.length === 0 ? (
-        <div className="glass-3d-box text-center py-16 rounded-2xl">
-          <BookOpen className="w-12 h-12 text-[#00e599] mx-auto mb-3 opacity-60" />
-          <h3 className="text-base font-semibold text-white font-sindhi">
+        <div className="card-3d-white text-center py-16 rounded-3xl space-y-3">
+          <BookOpen className="w-12 h-12 text-blue-400 mx-auto opacity-70" />
+          <h3 className="text-base font-heading font-black text-slate-900">
             {t('noResults')}
           </h3>
           <button
@@ -175,7 +175,7 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
               setSelectedFormat('all');
               setSearchQuery('');
             }}
-            className="mt-4 px-4 py-2 bg-[#00e599] text-slate-950 rounded-lg text-xs font-bold cursor-pointer shadow-md"
+            className="btn-3d-blue px-5 py-2.5 rounded-full text-xs font-heading font-black cursor-pointer shadow-md"
           >
             {t('resetFilters')}
           </button>
@@ -187,10 +187,10 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
             return (
               <div
                 key={item.id}
-                className="glass-3d-card rounded-2xl overflow-hidden flex flex-col justify-between group"
+                className="card-3d-white rounded-2xl overflow-hidden flex flex-col justify-between group"
               >
                 {/* Thumbnail Header */}
-                <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
+                <div className="relative aspect-video w-full bg-slate-100 overflow-hidden">
                   <img
                     src={item.thumbnail_url || '/src/assets/images/anmol_sindh_hero_1792756358994.jpg'}
                     alt=""
@@ -199,15 +199,15 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
                   />
                   
                   {/* Format Indicator Icon */}
-                  <div className="absolute top-3 left-3 px-2.5 py-1 bg-black/85 border border-[#00e599]/30 backdrop-blur-md rounded text-white text-[11px] font-bold flex items-center gap-1.5 uppercase">
-                    {item.content_type === 'audio' && <Music className="w-3.5 h-3.5 text-[#00e599]" />}
-                    {item.content_type === 'video' && <Video className="w-3.5 h-3.5 text-teal-400" />}
-                    {item.content_type === 'pdf' && <FileText className="w-3.5 h-3.5 text-amber-400" />}
+                  <div className="absolute top-3 left-3 px-2.5 py-1 bg-white/95 backdrop-blur-md border border-slate-200 rounded-full text-slate-800 text-[11px] font-heading font-bold flex items-center gap-1.5 uppercase shadow-xs">
+                    {item.content_type === 'audio' && <Music className="w-3.5 h-3.5 text-rose-500" />}
+                    {item.content_type === 'video' && <Video className="w-3.5 h-3.5 text-blue-600" />}
+                    {item.content_type === 'pdf' && <FileText className="w-3.5 h-3.5 text-amber-500" />}
                     <span>{item.file_format || item.content_type}</span>
                   </div>
 
                   {/* Class Badge */}
-                  <div className="absolute top-3 right-3 px-2.5 py-1 bg-[#00e599] text-slate-950 font-black rounded text-[11px] shadow-sm">
+                  <div className="absolute top-3 right-3 px-2.5 py-1 bg-blue-600 text-white font-heading font-black rounded-full text-[11px] shadow-xs">
                     Class {item.class_level}
                   </div>
                 </div>
@@ -215,28 +215,28 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
                 {/* Content Details */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
-                      <span className="font-bold text-[#00e599]">{item.subject}</span>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 font-medium">
+                      <span className="font-heading font-bold text-blue-600">{item.subject}</span>
                       <span aria-hidden="true">·</span>
                       <span>{item.file_size || '3.2 MB'}</span>
                       <span aria-hidden="true">·</span>
                       <span className="tabular-nums">{item.downloads_count} downloads</span>
                     </div>
 
-                    <h3 className="font-sindhi text-base font-bold text-white group-hover:text-[#00e599] transition-colors line-clamp-2">
+                    <h3 className="font-heading text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                       {getText(item, 'title')}
                     </h3>
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed font-medium">
                       {getText(item, 'description')}
                     </p>
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
                     {item.content_type === 'audio' && (
                       <button
                         onClick={() => onPlayAudio?.(item)}
-                        className="text-xs font-bold text-[#00e599] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-xs font-heading font-bold text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Music className="w-3.5 h-3.5" />
                         <span>{t('playNow')}</span>
@@ -245,7 +245,7 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
                     {item.content_type === 'video' && (
                       <button
                         onClick={() => onWatchVideo(item)}
-                        className="text-xs font-bold text-[#00e599] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-xs font-heading font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Video className="w-3.5 h-3.5" />
                         <span>{t('watchNow')}</span>
@@ -254,21 +254,21 @@ export const DownloadCenter: React.FC<DownloadCenterProps> = ({
                     {item.content_type === 'pdf' && (
                       <button
                         onClick={() => onOpenPdf && onOpenPdf(item)}
-                        className="text-xs font-bold text-[#00e599] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-xs font-heading font-bold text-amber-700 hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <BookOpen className="w-3.5 h-3.5" />
-                        <span>{language === 'sd' ? 'پڙهو (Read PDF)' : 'پڑھیں (Read)'}</span>
+                        <span>{language === 'sd' ? 'پڙهو (Read PDF)' : 'Read PDF'}</span>
                       </button>
                     )}
 
                     <button
                       onClick={() => handleDownload(item)}
                       disabled={isDownloading}
-                      className="px-4 py-2 bg-[#00e599] hover:bg-[#4ffec0] text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-[0_0_12px_rgba(0,229,153,0.3)] transition-all cursor-pointer"
+                      className="btn-3d-green px-4 py-2 rounded-xl text-xs font-heading font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                     >
                       {isDownloading ? (
                         <>
-                          <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-3.5 h-3.5 border-2 border-emerald-950 border-t-transparent rounded-full animate-spin"></div>
                           <span>Downloading...</span>
                         </>
                       ) : (

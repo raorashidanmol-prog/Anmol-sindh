@@ -18,71 +18,66 @@ interface AppsSectionProps {
 }
 
 export const AppsSection: React.FC<AppsSectionProps> = ({ apps, onOpenApp }) => {
-  const { getText, language } = useLanguage();
+  const { getText } = useLanguage();
 
   const getAppIcon = (iconName: string) => {
     switch (iconName) {
       case 'Calculator':
-        return <Calculator className="w-5 h-5 text-[#00e599]" />;
+        return <Calculator className="w-5 h-5 text-blue-600" />;
       case 'FileCheck':
-        return <FileCheck className="w-5 h-5 text-[#00e599]" />;
+        return <FileCheck className="w-5 h-5 text-purple-600" />;
       case 'BookOpen':
-        return <BookOpen className="w-5 h-5 text-[#00e599]" />;
+        return <BookOpen className="w-5 h-5 text-amber-600" />;
       case 'Trophy':
-        return <Trophy className="w-5 h-5 text-amber-400" />;
+        return <Trophy className="w-5 h-5 text-amber-500" />;
       default:
-        return <Gamepad2 className="w-5 h-5 text-[#00e599]" />;
+        return <Gamepad2 className="w-5 h-5 text-rose-500" />;
     }
   };
 
   const handleDirectOpen = (app: AppLink) => {
-    // Open all apps, games, and website links in the In-App Viewer
     onOpenApp(app.id);
   };
 
   return (
-    <section id="apps" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <section id="apps" className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-8">
       
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-          <span className="text-xs uppercase tracking-wider text-[#00e599] font-black block mb-1">
-            {language === 'sd' ? 'تعليمي رانديون ۽ ايپليڪيشنز' : 'تعلیمی کھیل اور ایپس'}
+          <span className="text-xs uppercase tracking-wider text-rose-500 font-heading font-black block mb-1">
+            Fun Learning & Interactive Practice
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-sindhi">
-            {language === 'sd' ? 'رانديون ۽ تعليمي ايپس (Apps & Games)' : language === 'ur' ? 'کھیل اور تعلیمی ایپس' : 'Games & Learning Apps'}
+          <h2 className="text-2xl sm:text-3xl font-heading font-black text-slate-900">
+            Educational Games & Interactive Apps
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-            {language === 'sd'
-              ? 'هر ايپ جو الڳ 3D شيڊ باڪس ۽ پهرين اسڪرين تصوير. سڌو لنڪ کولڻ لاءِ تصوير تي ڪلڪ ڪريو.'
-              : 'Separate 3D glassy box for each app with first screen image. Press on image to open link direct.'}
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl font-medium">
+            3D interactive cards with first-screen preview. Tap the image to launch the app inside the viewer!
           </p>
         </div>
 
-        <div className="text-xs text-[#00e599] bg-[#00e599]/15 border border-[#00e599]/40 px-3.5 py-1.5 rounded-full flex items-center gap-2 self-start sm:self-auto font-bold shadow-[0_0_12px_rgba(0,229,153,0.2)]">
-          <Smartphone className="w-3.5 h-3.5 text-[#00e599]" />
-          <span>Press Image to Open Link Direct</span>
+        <div className="text-xs text-blue-700 bg-sky-100/90 border-2 border-sky-300 px-4 py-1.5 rounded-full flex items-center gap-2 self-start sm:self-auto font-heading font-bold shadow-xs">
+          <Smartphone className="w-4 h-4 text-blue-600" />
+          <span>Tap Image to Play In-App</span>
         </div>
       </div>
 
-      {/* Grid of Separate 3D Glassy App Boxes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Grid of 3D Cartoon App Boxes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
         {apps.map((app) => {
           const screenImage = app.first_screen_image || app.thumbnail_url || '/src/assets/images/fun_with_math_1792756361029.jpg';
 
           return (
             <div
               key={app.id}
-              className="glass-3d-card rounded-2xl overflow-hidden flex flex-col justify-between group"
+              className="card-3d-white overflow-hidden flex flex-col justify-between group"
             >
               <div>
-                {/* ============================================================ */}
-                {/* APP FIRST SCREEN IMAGE - PRESS ON IMAGE TO OPEN LINK DIRECT */}
-                {/* ============================================================ */}
+                {/* App First Screen Image */}
                 <div 
                   onClick={() => handleDirectOpen(app)}
-                  className="relative aspect-[16/10] w-full bg-slate-950 overflow-hidden cursor-pointer group/screen"
-                  title="Press on image to open link direct"
+                  className="relative aspect-[16/10] w-full bg-slate-900 overflow-hidden cursor-pointer group/screen"
+                  title="Click to launch app in viewer"
                 >
                   <img
                     src={screenImage}
@@ -92,52 +87,58 @@ export const AppsSection: React.FC<AppsSectionProps> = ({ apps, onOpenApp }) => 
                   />
 
                   {/* Gradient Scrim */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#04060a] via-black/30 to-transparent opacity-85 group-hover/screen:opacity-95 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
                   {/* Top Badge: Category */}
-                  <div className="absolute top-2.5 left-2.5 px-2.5 py-1 bg-[#04060a]/90 border border-[#00e599]/30 backdrop-blur-md rounded-md text-white text-[11px] font-bold flex items-center gap-1.5 shadow-md">
+                  <div className="absolute top-2.5 left-2.5 px-3 py-1 bg-white/95 backdrop-blur-md rounded-full text-slate-800 text-[11px] font-heading font-bold flex items-center gap-1.5 shadow-sm border border-sky-100">
                     {getAppIcon(app.icon)}
-                    <span className="text-slate-200">{app.category}</span>
+                    <span>{app.category}</span>
                   </div>
 
                   {/* Top Badge: Status / Popular */}
                   {app.badge && (
-                    <div className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-[#00e599] text-slate-950 text-[10px] font-black rounded-md shadow-[0_0_10px_rgba(0,229,153,0.4)] uppercase">
+                    <div className="absolute top-2.5 right-2.5 px-3 py-1 bg-amber-400 text-amber-950 text-[10px] font-heading font-black rounded-full shadow-sm uppercase">
                       {app.badge}
                     </div>
                   )}
 
                   {/* Direct Link Hover Overlay */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center opacity-0 group-hover/screen:opacity-100 transition-opacity bg-black/60 backdrop-blur-[2px]">
-                    <div className="w-12 h-12 rounded-full bg-[#00e599] text-slate-950 flex items-center justify-center shadow-[0_0_20px_rgba(0,229,153,0.6)] transform group-hover/screen:scale-110 transition-transform">
-                      <ExternalLink className="w-6 h-6 stroke-[2.5]" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center opacity-0 group-hover/screen:opacity-100 transition-opacity bg-blue-900/60 backdrop-blur-[2px]">
+                    <div className="w-13 h-13 rounded-full bg-yellow-400 text-amber-950 flex items-center justify-center shadow-lg transform group-hover/screen:scale-110 transition-transform border-2 border-white">
+                      <Gamepad2 className="w-6 h-6" />
                     </div>
-                    <span className="text-slate-950 text-xs font-black mt-2 bg-[#00e599] px-3.5 py-1 rounded-full shadow-lg">
-                      Open Direct Link
+                    <span className="text-white text-xs font-heading font-black mt-2 bg-blue-600 px-4 py-1 rounded-full shadow-md">
+                      Play Now
                     </span>
                   </div>
 
                   {/* Bottom indicator inside screen */}
-                  <div className="absolute bottom-2 inset-x-3 flex items-center justify-between text-[11px] text-[#00e599] pointer-events-none">
-                    <span className="truncate max-w-[70%] font-mono text-[10px] text-slate-300">
+                  <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between text-[11px] text-white">
+                    <span className="truncate max-w-[70%] font-mono text-[10px] text-sky-200">
                       {app.url}
                     </span>
-                    <span className="text-[10px] bg-[#00e599]/20 border border-[#00e599]/40 backdrop-blur-xs px-2 py-0.5 rounded text-[#00e599] font-bold">
-                      Press Image
+                    <span className="text-[10px] bg-sky-500/80 backdrop-blur-xs px-2 py-0.5 rounded-full font-heading font-bold">
+                      Tap Image
                     </span>
                   </div>
                 </div>
 
                 {/* App Content Info */}
-                <div className="p-4 space-y-2">
+                <div className="p-4 space-y-1.5">
                   <h3 
                     onClick={() => handleDirectOpen(app)}
-                    className="font-sindhi text-lg font-bold text-white group-hover:text-[#00e599] transition-colors cursor-pointer line-clamp-1"
+                    className="font-heading font-black text-base text-slate-800 group-hover:text-blue-600 transition-colors cursor-pointer line-clamp-1"
                   >
-                    {getText(app, 'title')}
+                    {app.title_en}
                   </h3>
 
-                  <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                  {app.title_sd && (
+                    <p className="font-sindhi text-xs text-slate-500 line-clamp-1">
+                      {app.title_sd}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                     {getText(app, 'description')}
                   </p>
                 </div>
@@ -147,11 +148,11 @@ export const AppsSection: React.FC<AppsSectionProps> = ({ apps, onOpenApp }) => 
               <div className="p-4 pt-0">
                 <button
                   onClick={() => handleDirectOpen(app)}
-                  className="w-full py-2.5 px-3 bg-[#0a121f] hover:bg-[#00e599] text-slate-200 hover:text-slate-950 border border-[#00e599]/30 hover:border-[#00e599] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer hover:shadow-[0_0_15px_rgba(0,229,153,0.35)]"
+                  className="btn-3d-blue w-full py-2.5 px-3 rounded-full text-xs font-heading font-bold flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>{language === 'sd' ? 'سڌو لنڪ کوليو (Open Direct)' : language === 'ur' ? 'براہ راست لنک کھولیں' : 'Open Link Direct'}</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-[#00e599] group-hover:text-slate-950" />
+                  <span>Play In-App</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-sky-200" />
                 </button>
               </div>
 

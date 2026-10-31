@@ -239,33 +239,29 @@ export const GamesSectionFrame: React.FC<GamesSectionFrameProps> = ({
   return (
     <section 
       aria-label="Educational Games Frame"
-      className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 my-6"
+      className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6 my-6"
     >
-      {/* 3D Glassy Frame Container */}
-      <div className="relative rounded-3xl bg-[#040812]/95 border-2 border-[#00e599]/40 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_35px_rgba(0,229,153,0.18)] backdrop-blur-2xl overflow-hidden p-4 sm:p-7">
+      {/* 3D Cartoon Frame Container */}
+      <div className="card-3d-white p-4 sm:p-7">
         
         {/* Frame Top Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#00e599]/25">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-sky-100">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#00e599] text-slate-950 flex items-center justify-center shadow-[0_0_25px_rgba(0,229,153,0.6)]">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center shadow-md shadow-rose-500/25">
               <Gamepad2 className="w-7 h-7" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-md bg-[#00e599]/20 border border-[#00e599]/40 text-[11px] text-[#00e599] font-bold">
-                  {language === 'sd' ? 'سڌو سنئون هتي کيڏو' : 'وہیں کھیلیں — نو ری ڈائریکٹ'}
+                <span className="px-3 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-heading font-bold">
+                  Play Right Here — No Redirect
                 </span>
-                <span className="text-xs text-amber-400 font-bold flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>3D Glassy Interactive Game Hub</span>
+                <span className="text-xs text-amber-600 font-heading font-bold flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Interactive 3D Game Hub</span>
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-white font-sindhi tracking-wide mt-1">
-                {language === 'sd' 
-                  ? 'پرائمري تعليمي راندين جو فريم (Playable Games Frame)'
-                  : language === 'ur'
-                  ? 'پرائمری تعلیمی کھیل فریم (Play Games Here)'
-                  : 'Interactive Primary Educational Games Frame'}
+              <h2 className="text-xl sm:text-2xl font-heading font-black text-slate-900 tracking-tight mt-1">
+                Interactive Primary Educational Games Frame
               </h2>
             </div>
           </div>
@@ -274,10 +270,10 @@ export const GamesSectionFrame: React.FC<GamesSectionFrameProps> = ({
           <div className="flex items-center gap-2 self-end md:self-auto">
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="p-2.5 rounded-xl bg-[#091522] border border-[#00e599]/30 text-slate-300 hover:text-[#00e599] transition-all cursor-pointer shadow-sm"
+              className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-slate-600 hover:text-blue-600 transition-all cursor-pointer shadow-xs"
               title={soundEnabled ? 'Mute Game Sound' : 'Enable Game Sound'}
             >
-              {soundEnabled ? <Volume2 className="w-4 h-4 text-[#00e599]" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-blue-600" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
             </button>
 
             <button
@@ -289,11 +285,11 @@ export const GamesSectionFrame: React.FC<GamesSectionFrameProps> = ({
                 setQuizFinished(false);
                 setScienceQIndex(0);
               }}
-              className="px-3.5 py-2 rounded-xl bg-[#091522] hover:bg-[#00e599]/20 border border-[#00e599]/30 text-slate-300 hover:text-[#00e599] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              className="px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-slate-700 hover:text-blue-700 text-xs font-heading font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               title="Reset All Scores"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>{language === 'sd' ? 'ٻيهر شروع' : 'ری سیٹ'}</span>
+              <span>Reset Scores</span>
             </button>
           </div>
         </div>

@@ -61,57 +61,52 @@ export const FolderButtonBar: React.FC<FolderButtonBarProps> = ({
   };
 
   return (
-    <div className="w-full bg-slate-950/80 border-y border-[#00e599]/20 backdrop-blur-md sticky top-16 z-30 py-2.5 px-2 sm:px-4 shadow-lg shadow-black/40">
+    <div className="w-full bg-white/95 border-y-2 border-sky-100 backdrop-blur-md sticky top-18 z-30 py-2.5 px-2 sm:px-4 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center gap-1 sm:gap-2">
         
         {/* Scroll Left Button */}
         <button
           onClick={() => scroll('left')}
-          className="p-1.5 rounded-lg bg-slate-900/90 text-slate-300 hover:text-[#00e599] hover:bg-slate-800 border border-slate-800 transition-colors shrink-0 shadow-sm"
+          className="p-2 rounded-xl bg-sky-50 text-sky-700 hover:text-blue-700 hover:bg-sky-100 border border-sky-200 transition-colors shrink-0 shadow-xs cursor-pointer"
           title="Scroll Left"
           aria-label="Scroll Left"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
         </button>
 
         {/* Scrollable Horizontal Button Track */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1"
+          className="flex-1 flex items-center gap-2.5 overflow-x-auto no-scrollbar scroll-smooth py-1"
         >
           {folders.map((folder) => {
             const isActive = activeFolderId === folder.id;
             const Icon = getFolderIcon(folder.icon);
             const count = itemCounts[folder.id] ?? 0;
 
-            const folderName =
-              language === 'sd'
-                ? folder.name_sd
-                : language === 'ur'
-                ? folder.name_ur
-                : folder.name_en;
+            const folderName = folder.name_en || folder.name_sd;
 
             return (
               <button
                 key={folder.id}
                 onClick={() => onSelectFolder(folder.id)}
-                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 transform shrink-0 active:scale-95 ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-heading font-bold whitespace-nowrap transition-all duration-200 transform shrink-0 cursor-pointer ${
                   isActive
-                    ? 'bg-gradient-to-r from-emerald-500 via-[#00e599] to-teal-400 text-slate-950 shadow-lg shadow-[#00e599]/30 scale-[1.02]'
-                    : 'bg-slate-900/90 hover:bg-slate-800/90 text-slate-300 hover:text-white border border-slate-800/80 hover:border-[#00e599]/40'
+                    ? 'btn-3d-blue scale-[1.02]'
+                    : 'bg-white hover:bg-sky-50/70 text-slate-700 hover:text-blue-700 border-2 border-sky-100 border-b-4 hover:border-b-sky-300 shadow-xs'
                 }`}
               >
                 <Icon
                   className={`w-4 h-4 ${
-                    isActive ? 'text-slate-950 stroke-[2.5]' : 'text-[#00e599]'
+                    isActive ? 'text-white' : 'text-blue-500'
                   }`}
                 />
-                <span className="font-sindhi">{folderName}</span>
+                <span>{folderName}</span>
                 <span
-                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold ${
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
                     isActive
-                      ? 'bg-black/20 text-black'
-                      : 'bg-slate-800 text-slate-400 border border-slate-700/60'
+                      ? 'bg-white/25 text-white'
+                      : 'bg-sky-100 text-sky-800'
                   }`}
                 >
                   {count}
@@ -124,11 +119,11 @@ export const FolderButtonBar: React.FC<FolderButtonBarProps> = ({
           {onOpenAddFolder && (
             <button
               onClick={onOpenAddFolder}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-emerald-400 hover:text-white bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800/60 border-dashed transition-colors whitespace-nowrap shrink-0"
-              title="Add New Folder"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-heading font-bold text-blue-600 hover:text-blue-800 bg-sky-50 hover:bg-sky-100 border-2 border-dashed border-sky-300 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              title="Add New Folder in Admin Panel"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="font-sindhi">نئون فولڊر +</span>
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>+ New Folder</span>
             </button>
           )}
         </div>
@@ -136,11 +131,11 @@ export const FolderButtonBar: React.FC<FolderButtonBarProps> = ({
         {/* Scroll Right Button */}
         <button
           onClick={() => scroll('right')}
-          className="p-1.5 rounded-lg bg-slate-900/90 text-slate-300 hover:text-[#00e599] hover:bg-slate-800 border border-slate-800 transition-colors shrink-0 shadow-sm"
+          className="p-2 rounded-xl bg-sky-50 text-sky-700 hover:text-blue-700 hover:bg-sky-100 border border-sky-200 transition-colors shrink-0 shadow-xs cursor-pointer"
           title="Scroll Right"
           aria-label="Scroll Right"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4 stroke-[2.5]" />
         </button>
       </div>
     </div>

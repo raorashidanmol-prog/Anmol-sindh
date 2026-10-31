@@ -13,7 +13,8 @@ import {
   Clock, 
   Download,
   Calendar,
-  Flame
+  Flame,
+  Star
 } from 'lucide-react';
 
 interface ThisWeekUpdatesProps {
@@ -33,12 +34,9 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
   onOpenPdf,
   onOpenApp,
 }) => {
-  const { getText, language } = useLanguage();
+  const { getText } = useLanguage();
 
-  // Combine latest resources & featured apps for "This Week" frame
   const publishedItems = resources.filter((r) => r.published);
-  
-  // Sort by latest created date or sort_order
   const sortedResources = [...publishedItems].sort(
     (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
   );
@@ -61,26 +59,24 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
     setCurrentIndex((prev) => (prev - 1 + total) % total);
   }, [total]);
 
-  // Auto-scroll images every 3 seconds
   useEffect(() => {
     if (total <= 1 || isPaused) return;
-
     const timer = setInterval(() => {
       nextSlide();
-    }, 3200);
-
+    }, 4000);
     return () => clearInterval(timer);
   }, [total, isPaused, nextSlide]);
 
-  // Sync scroll position with currentIndex
   useEffect(() => {
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
-      const cardWidth = container.offsetWidth > 768 ? container.offsetWidth / 3 : container.offsetWidth * 0.85;
-      container.scrollTo({
-        left: currentIndex * (cardWidth + 16),
-        behavior: 'smooth',
-      });
+      const child = container.children[currentIndex] as HTMLElement;
+      if (child) {
+        container.scrollTo({
+          left: child.offsetLeft - container.offsetLeft,
+          behavior: 'smooth',
+        });
+      }
     }
   }, [currentIndex]);
 
@@ -88,68 +84,58 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
     if (item.content_type === 'video') {
       onWatchVideo(item);
     } else if (item.content_type === 'pdf') {
-      if (onOpenPdf) {
-        onOpenPdf(item);
-      } else {
-        const a = document.createElement('a');
-        a.href = item.download_url || item.media_url || '#';
-        a.download = `${item.title_en || 'worksheet'}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-    } else if (item.content_type === 'audio' && onPlayAudio) {
-      onPlayAudio(item, updatesList.filter((r) => r.content_type === 'audio'));
+      if (onOpenPdf) onOpenPdf(item);
+      else onWatchVideo(item);
+    } else if (item.content_type === 'audio') {
+      if (onPlayAudio) onPlayAudio(item, updatesList);
+      else onWatchVideo(item);
+    } else {
+      onWatchVideo(item);
     }
   };
 
-  if (updatesList.length === 0) return null;
+  if (total === 0) return null;
 
   return (
     <section 
-      aria-label="This Week Updates"
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+      aria-label="New Updates This Week"
+      className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Outer Dedicated "This Week" Frame with 3D Glassy Border */}
-      <div className="glass-3d-box rounded-3xl p-5 sm:p-7 relative overflow-hidden border-2 border-[#00e599]/35 shadow-[0_16px_40px_rgba(0,0,0,0.9),0_0_25px_rgba(0,229,153,0.15)]">
+      {/* 3D Cartoon Frame Container */}
+      <div className="card-3d-white p-5 sm:p-7 relative overflow-hidden bg-gradient-to-br from-white via-sky-50/40 to-white">
         
-        {/* Decorative Top Accent Tag: "THIS WEEK" */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative z-10">
+        {/* Frame Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 relative z-10">
           <div className="flex items-center gap-3">
-            {/* Prominent "This Week" Badge */}
-            <div className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-[#00e599] to-[#4ffec0] text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 shadow-[0_0_18px_rgba(0,229,153,0.4)] shrink-0">
-              <Flame className="w-4 h-4 fill-current text-slate-950 animate-bounce" />
-              <span>This Week</span>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold shadow-md shadow-amber-500/30">
+              <Star className="w-6 h-6 fill-white drop-shadow-xs" />
             </div>
-
             <div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-white font-sindhi leading-snug">
-                {language === 'sd' 
-                  ? 'هن هفتي جون نيون اپڊيٽس (New Updates This Week)' 
-                  : language === 'ur' 
-                  ? 'اس ہفتے کی نئی اپڈیٹس (This Week Updates)' 
-                  : 'New Learning Updates — This Week'}
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-0.5 rounded-full text-[11px] font-heading font-black bg-rose-500 text-white tracking-wider uppercase shadow-xs">
+                  This Week
+                </span>
+                <span className="text-slate-300">·</span>
+                <span className="text-xs text-slate-500 font-medium">Auto-Scrolling Gallery</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-heading font-black text-slate-900 mt-0.5">
+                New Learning Updates — This Week
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {language === 'sd'
-                  ? 'سڀ نيون آڊيو نظمون، تعليمي وڊيوز ۽ درسي ورڪ شيٽس خودڪار اسڪرول ۾ ڏسو.'
-                  : 'Latest audio poems, video lessons, and worksheets updated this week.'}
-              </p>
             </div>
           </div>
 
           {/* < and > Navigation Signs on the Frame Screen */}
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-[11px] font-mono text-[#00e599] hidden md:inline">
-              {currentIndex + 1} / {total}
+            <span className="text-xs font-heading font-bold text-slate-400 hidden md:inline">
+              {currentIndex + 1} of {total}
             </span>
 
             {/* < Backward Arrow Button */}
             <button
               onClick={prevSlide}
-              className="w-10 h-10 rounded-xl bg-[#091522] hover:bg-[#00e599] text-white hover:text-slate-950 border border-[#00e599]/40 hover:border-[#00e599] flex items-center justify-center transition-all cursor-pointer shadow-md hover:shadow-[0_0_15px_rgba(0,229,153,0.4)] active:scale-95 text-base font-bold"
+              className="w-10 h-10 rounded-2xl bg-white hover:bg-sky-50 text-slate-800 hover:text-blue-600 border-2 border-sky-200 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95"
               title="Previous Update (<)"
               aria-label="Previous Update Slide"
             >
@@ -159,7 +145,7 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
             {/* > Forward Arrow Button */}
             <button
               onClick={nextSlide}
-              className="w-10 h-10 rounded-xl bg-[#091522] hover:bg-[#00e599] text-white hover:text-slate-950 border border-[#00e599]/40 hover:border-[#00e599] flex items-center justify-center transition-all cursor-pointer shadow-md hover:shadow-[0_0_15px_rgba(0,229,153,0.4)] active:scale-95 text-base font-bold"
+              className="w-10 h-10 rounded-2xl bg-white hover:bg-sky-50 text-slate-800 hover:text-blue-600 border-2 border-sky-200 flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95"
               title="Next Update (>)"
               aria-label="Next Update Slide"
             >
@@ -174,7 +160,7 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
           className="flex gap-4 overflow-x-auto scrollbar-none pb-2 pt-1 scroll-smooth snap-x snap-mandatory"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {updatesList.map((item, idx) => {
+          {updatesList.map((item) => {
             const isVideo = item.content_type === 'video';
             const isAudio = item.content_type === 'audio';
             const isPdf = item.content_type === 'pdf';
@@ -183,10 +169,10 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
               <div
                 key={item.id}
                 onClick={() => handleItemClick(item)}
-                className="w-[85%] sm:w-[48%] lg:w-[31.5%] shrink-0 snap-start glass-3d-card rounded-2xl overflow-hidden cursor-pointer group hover:border-[#00e599]/60 transition-all flex flex-col justify-between"
+                className="w-[85%] sm:w-[48%] lg:w-[31.5%] shrink-0 snap-start bg-white border-2 border-sky-100 hover:border-blue-400 border-b-4 hover:border-b-blue-500 rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 flex flex-col justify-between shadow-xs hover:-translate-y-1"
               >
                 {/* Image Header with Media Icon Badge */}
-                <div className="relative aspect-[16/10] w-full bg-slate-950 overflow-hidden">
+                <div className="relative aspect-[16/10] w-full bg-slate-900 overflow-hidden">
                   <img
                     src={item.thumbnail_url || '/src/assets/images/anmol_sindh_hero_1792756358994.jpg'}
                     alt={item.title_en}
@@ -195,62 +181,61 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
                   />
 
                   {/* Gradient Scrim */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 
                   {/* Format Badge: Audio / Video / PDF */}
-                  <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md bg-black/85 border border-[#00e599]/40 text-[#00e599] text-[11px] font-bold flex items-center gap-1.5 shadow-md">
-                    {isVideo && <Video className="w-3.5 h-3.5 text-[#00e599]" />}
-                    {isAudio && <Music className="w-3.5 h-3.5 text-[#00e599]" />}
-                    {isPdf && <FileText className="w-3.5 h-3.5 text-amber-400" />}
+                  <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-white/95 text-slate-900 text-[11px] font-heading font-bold flex items-center gap-1.5 shadow-sm border border-sky-100">
+                    {isVideo && <Video className="w-3.5 h-3.5 text-rose-500" />}
+                    {isAudio && <Music className="w-3.5 h-3.5 text-blue-500" />}
+                    {isPdf && <FileText className="w-3.5 h-3.5 text-amber-500" />}
                     <span className="capitalize">{item.content_type}</span>
                   </div>
 
                   {/* Class Badge */}
-                  <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-md bg-[#00e599] text-slate-950 text-[10px] font-black uppercase shadow-md">
+                  <div className="absolute top-2.5 right-2.5 px-3 py-1 rounded-full bg-amber-400 text-amber-950 text-[10px] font-heading font-black uppercase shadow-xs">
                     Class {item.class_level}
                   </div>
 
                   {/* Center Play / Action Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-                    <div className="w-12 h-12 rounded-full bg-[#00e599] text-slate-950 flex items-center justify-center shadow-[0_0_20px_rgba(0,229,153,0.7)] group-hover:scale-110 transition-transform">
-                      {isVideo && <Play className="w-6 h-6 fill-current translate-x-0.5" />}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-blue-900/40">
+                    <div className="w-12 h-12 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      {isVideo && <Play className="w-6 h-6 fill-blue-600 translate-x-0.5" />}
                       {isAudio && <Music className="w-6 h-6" />}
                       {isPdf && <Download className="w-6 h-6" />}
                     </div>
                   </div>
-
-                  {/* Bottom Duration Badge */}
-                  <div className="absolute bottom-2 inset-x-3 flex items-center justify-between text-[11px] text-white">
-                    <span className="flex items-center gap-1 font-mono text-[10px] bg-black/70 px-2 py-0.5 rounded">
-                      <Clock className="w-3 h-3 text-[#00e599]" />
-                      <span>{item.duration || item.file_size || 'Updated'}</span>
-                    </span>
-                    <span className="text-[10px] text-[#00e599] font-bold">
-                      {isVideo ? 'Watch Video' : isAudio ? 'Play Audio' : 'Download PDF'}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Content Info */}
-                <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+                <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
                   <div>
-                    <span className="text-[11px] font-bold text-[#00e599] block">
-                      {item.subject}
-                    </span>
-                    <h3 className="font-sindhi font-bold text-base text-white group-hover:text-[#00e599] transition-colors line-clamp-1">
-                      {getText(item, 'title')}
+                    <div className="flex items-center justify-between text-xs text-blue-600 font-heading font-bold mb-1">
+                      <span>{item.subject}</span>
+                      {item.duration && (
+                        <span className="text-slate-400 font-mono text-[10px] flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-slate-400" />
+                          <span>{item.duration}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="font-heading font-black text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                      {item.title_en}
                     </h3>
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                      {getText(item, 'description')}
-                    </p>
+                    
+                    {item.title_sd && (
+                      <p className="font-sindhi text-xs text-slate-500 line-clamp-1 mt-0.5">
+                        {item.title_sd}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="pt-2.5 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                    <span className="text-[11px] text-slate-400 font-mono">
-                      {item.language === 'sd' ? 'سنڌي ٻولي' : item.language === 'ur' ? 'اردو زبان' : 'English'}
-                    </span>
-                    <span className="text-[#00e599] font-bold group-hover:underline">
-                      {isVideo ? 'Play Now →' : isAudio ? 'Listen →' : 'Download →'}
+                  {/* Action Link */}
+                  <div className="pt-2 border-t border-sky-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-400 text-[11px]">Primary Curriculum</span>
+                    <span className="text-blue-600 font-heading font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                      <span>Open Now</span>
+                      <Play className="w-3 h-3 fill-current" />
                     </span>
                   </div>
                 </div>
@@ -258,22 +243,6 @@ export const ThisWeekUpdates: React.FC<ThisWeekUpdatesProps> = ({
               </div>
             );
           })}
-        </div>
-
-        {/* Bottom Dot Indicators */}
-        <div className="flex items-center justify-center gap-1.5 mt-4">
-          {updatesList.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentIndex(i)}
-              className={`transition-all rounded-full cursor-pointer ${
-                currentIndex === i 
-                  ? 'w-6 h-1.5 bg-[#00e599] shadow-[0_0_8px_rgba(0,229,153,0.6)]' 
-                  : 'w-1.5 h-1.5 bg-slate-800 hover:bg-slate-600'
-              }`}
-              aria-label={`Go to update ${i + 1}`}
-            />
-          ))}
         </div>
 
       </div>

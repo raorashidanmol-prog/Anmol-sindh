@@ -32,21 +32,21 @@ export const FolderGrid: React.FC<FolderGridProps> = ({
   const getFolderIcon = (iconName: string) => {
     switch (iconName) {
       case 'Music':
-        return <Music className="w-6 h-6 text-[#00e599]" />;
+        return <Music className="w-6 h-6 text-rose-500" />;
       case 'BookOpen':
-        return <BookOpen className="w-6 h-6 text-[#00e599]" />;
+        return <BookOpen className="w-6 h-6 text-blue-600" />;
       case 'Film':
-        return <Film className="w-6 h-6 text-[#00e599]" />;
+        return <Film className="w-6 h-6 text-purple-600" />;
       case 'Calculator':
-        return <Calculator className="w-6 h-6 text-[#00e599]" />;
+        return <Calculator className="w-6 h-6 text-emerald-600" />;
       case 'FileCheck':
-        return <FileCheck className="w-6 h-6 text-[#00e599]" />;
+        return <FileCheck className="w-6 h-6 text-amber-500" />;
       case 'Gamepad2':
-        return <Gamepad2 className="w-6 h-6 text-[#00e599]" />;
+        return <Gamepad2 className="w-6 h-6 text-pink-500" />;
       case 'Smartphone':
-        return <Smartphone className="w-6 h-6 text-[#00e599]" />;
+        return <Smartphone className="w-6 h-6 text-sky-600" />;
       default:
-        return <Folder className="w-6 h-6 text-[#00e599]" />;
+        return <Folder className="w-6 h-6 text-blue-500" />;
     }
   };
 
@@ -54,34 +54,34 @@ export const FolderGrid: React.FC<FolderGridProps> = ({
     <section 
       id="learning-folders"
       aria-label="Educational Folders and Categories"
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
     >
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#00e599] animate-pulse"></span>
-            <span className="text-xs uppercase tracking-wider text-[#00e599] font-black block">
-              {language === 'sd' ? 'درسي شعبا ۽ ڪيٽيگري فولڊرز' : 'تعلیمی شعبہ جات اور فولڈرز'}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+            <span className="text-xs uppercase tracking-wider text-blue-600 font-heading font-black block">
+              {language === 'sd' ? 'درسي شعبا ۽ ڪيٽيگري فولڊرز' : 'Organized Educational Folders'}
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-sindhi">
+          <h2 className="text-2xl sm:text-3xl font-heading font-black text-slate-900">
             {language === 'sd' 
-              ? 'تعليمي فولڊر ۽ ڪورس ڪيٽيگريز (Educational Folders)' 
+              ? 'تعليمي فولڊر ۽ ڪورس ڪيٽيگريز' 
               : language === 'ur' 
               ? 'تعلیمی فولڈرز اور مضامین' 
               : 'Educational Learning Folders'}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+          <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl font-medium">
             {language === 'sd'
               ? 'هر موضوع جا جدا جدا فولڊر. ڪنهن به فولڊر تي ڪلڪ ڪري ان جون مخصوص نظمون، وڊيوز يا رانديون ڏسو.'
               : 'Organized folders for poems, videos, games, and math. Click any folder to browse its specific contents.'}
           </p>
         </div>
 
-        <div className="text-xs text-[#00e599] bg-[#00e599]/15 border border-[#00e599]/40 px-3.5 py-1.5 rounded-full flex items-center gap-2 self-start sm:self-auto font-bold shadow-[0_0_12px_rgba(0,229,153,0.2)]">
-          <FolderOpen className="w-3.5 h-3.5 text-[#00e599]" />
-          <span>Click to Open Dedicated Folder</span>
+        <div className="text-xs text-blue-700 bg-blue-50 border-2 border-blue-200 px-4 py-2 rounded-full flex items-center gap-2 self-start sm:self-auto font-heading font-bold shadow-xs">
+          <FolderOpen className="w-4 h-4 text-blue-600" />
+          <span>Click to Open Folder</span>
         </div>
       </div>
 
@@ -95,32 +95,32 @@ export const FolderGrid: React.FC<FolderGridProps> = ({
             <div
               key={folder.id}
               onClick={() => onOpenFolder(folder.id)}
-              className="glass-3d-card rounded-2xl p-6 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
+              className="card-3d-white p-6 cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden"
             >
               {/* Decorative Folder Tab at top */}
-              <div className="absolute top-0 right-8 w-24 h-2 bg-[#00e599]/30 rounded-b-md group-hover:bg-[#00e599] transition-colors"></div>
+              <div className="absolute top-0 right-8 w-20 h-2 bg-blue-300 rounded-b-md group-hover:bg-blue-500 transition-colors"></div>
 
               <div>
                 {/* Header: Icon + Badge + Count */}
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#091522] border border-[#00e599]/35 flex items-center justify-center shadow-[0_0_15px_rgba(0,229,153,0.2)] group-hover:scale-108 group-hover:border-[#00e599] transition-all">
+                  <div className="w-13 h-13 rounded-2xl bg-sky-50 border-2 border-sky-100 flex items-center justify-center shadow-xs group-hover:scale-108 transition-all">
                     {getFolderIcon(folder.icon)}
                   </div>
 
                   <div className="flex items-center gap-2">
                     {folder.badge && (
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#00e599]/15 text-[#00e599] border border-[#00e599]/30">
+                      <span className="text-[10px] uppercase font-heading font-black tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                         {folder.badge}
                       </span>
                     )}
-                    <span className="text-xs font-mono font-bold text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700">
+                    <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
                       {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
                     </span>
                   </div>
                 </div>
 
                 {/* Folder Title */}
-                <h3 className="text-lg sm:text-xl font-bold font-sindhi text-white group-hover:text-[#00e599] transition-colors leading-snug">
+                <h3 className="text-lg sm:text-xl font-heading font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
                   {language === 'sd' 
                     ? folder.title_sd 
                     : language === 'ur' 
@@ -129,7 +129,7 @@ export const FolderGrid: React.FC<FolderGridProps> = ({
                 </h3>
 
                 {/* Folder Description */}
-                <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed font-medium">
                   {language === 'sd' 
                     ? folder.description_sd 
                     : language === 'ur' 
@@ -139,14 +139,14 @@ export const FolderGrid: React.FC<FolderGridProps> = ({
               </div>
 
               {/* Action Strip: "Open Folder" */}
-              <div className="mt-5 pt-4 border-t border-[#00e599]/15 flex items-center justify-between text-xs font-bold text-[#00e599] group-hover:text-[#4ffec0]">
+              <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-heading font-bold text-blue-600 group-hover:text-blue-700">
                 <span className="flex items-center gap-1.5">
                   <FolderOpen className="w-4 h-4" />
                   <span>
                     {language === 'sd' ? 'فولڊر کوليو' : language === 'ur' ? 'فولڈر کھولیں' : 'Open Folder'}
                   </span>
                 </span>
-                <div className="w-7 h-7 rounded-lg bg-[#00e599]/15 group-hover:bg-[#00e599] group-hover:text-slate-950 flex items-center justify-center transition-all">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-all shadow-xs">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
